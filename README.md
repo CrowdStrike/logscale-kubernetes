@@ -167,8 +167,8 @@ This section describes the variables that can be configured in your `terraform.t
 |---------------------------------|----------------------------------------------------------------------------|--------|--------------------------------|------------|
 | `provision_kafka_servers`       | Set to true to provision strimzi kafka within this kubernetes cluster.     | bool   | `true`                         | `true`     |
 | `byo_kafka_connection_string`   | Your own kafka environment connection string.                              | string | `""`                           | -          |
-| `strimzi_operator_chart_version`| Helm chart version for installing strimzi.                                 | string | `""`                           | `"0.45.0"` |
-| `strimzi_operator_version`      | Strimzi operator version for resource definition installation.             | string | `""`                           | `"0.45.0"` |
+| `strimzi_operator_chart_version`| Helm chart version for installing strimzi.                                 | string | `""`                           | `"0.47.0"` |
+| `strimzi_operator_version`      | Strimzi operator version for resource definition installation.             | string | `""`                           | `"0.47.0"` |
 | `strimzi_operator_repo`         | Strimzi operator repo.                                                     | string | `"https://strimzi.io/charts/"` | -          |
 
 ### Operator and Chart Versions
