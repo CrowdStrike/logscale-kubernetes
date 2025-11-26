@@ -1,4 +1,4 @@
-terraform {
+/*terraform {
   required_providers {
     random = {
       source = "hashicorp/random"
@@ -42,4 +42,4 @@ provider "helm" {
     config_path    = var.k8s_config_path
     config_context = var.k8s_cluster_context
   }
-}
+}*/

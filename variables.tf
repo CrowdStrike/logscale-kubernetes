@@ -64,13 +64,13 @@ variable "node_group_definitions" {
 variable "humio_operator_version" {
   description       = "The humio operator controls provisioning of logscale resources within kubernetes."
   type              = string
-  default           = "0.32.0"
+  default           = "0.29.2"
 }
 
 variable "humio_operator_chart_version" {
   description       = "This is the version of the helm chart that installs the humio operator version chosen in variable humio_operator_version."
   type              = string
-  default           = "0.32.0"
+  default           = "0.29.2"
 }
 
 variable "cm_repo" {
