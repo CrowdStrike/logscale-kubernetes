@@ -195,6 +195,16 @@ This section describes the variables that can be configured in your `terraform.t
 | `extra_nginx_annotations`         | Extra annotations to add to the nginx ingress controller.   | map          | `{}`     | See commented example in local-input.tfvars |
 | `ingress_class_name`              | Class name of the nginx ingress controller.                 | string       | `"nginx"`| `"nginx"`                                   |
 
+### PDF Render Service
+
+| Variable Name                   | Description                                  | Type   | Default | Example |
+|---------------------------------|----------------------------------------------|--------|---------|---------|
+| `enable_pdf_render_service`     | Enable PDF render service.                   | bool   | `false` | -       |
+| `pdf_render_service_image`      | Docker image of the PDF render service.      | string | -       | `"humio/pdf-render-service:0.1.2--build-104--sha-9a7598de95bb9775b6f59d874c37a206713bae01"` |
+| `pdf_render_service_node_count` | The replica count of the PDF render service. | number | `2`     | -       |
+| `pdf_render_service_port`       | Port of the PDF render service.              | string | `5123`  | -       |
+| `enable_scheduled_report`       | Enable scheduled report functionality.       | bool   | `false` | -       |
+
 ### Password Management
 
 | Variable Name                       | Description                                               | Type   | Default           | Example |
