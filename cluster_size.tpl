@@ -14,7 +14,7 @@ ${jsonencode(
         "kafka_broker_resources": {"limits": {"cpu": 1, "memory": "2Gi"}, "requests": {"cpu": 1, "memory": "2Gi"}},
         "kafka_broker_data_disk_size": "24Gi",
         "kafka_broker_disk_count": "1",
-//        "kafka_broker_data_storage_class": "topolvm-provisioner",
+        "kafka_broker_data_storage_class": "topolvm-provisioner",
 
         // digest nodes
         "logscale_digest_pod_count": 3,
