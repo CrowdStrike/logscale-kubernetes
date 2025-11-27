@@ -124,14 +124,14 @@ variable "humio_operator_extra_values" {
 variable "strimzi_operator_chart_version" {
   type            = string
   description     = "Helm chart version for installing strimzi."
-  default         = "0.45.0"
+  default         = "0.47.0"
 }
 
 # TODO: Validate if byo kafka cluster is enabled.
 variable "strimzi_operator_version" {
   type            = string
   description     = "Strimzi operator version for resource definition installation."
-  default         = "0.45.0" 
+  default         = "0.47.0" 
 }
 
 variable "strimzi_operator_repo" {
