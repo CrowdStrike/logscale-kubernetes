@@ -255,7 +255,6 @@ variable "use_topo_lvm" {
   description = "Use TopoLVM for volume group management"
 }
 
-
 variable "topo_lvm_disk_pattern" {
   description = "The pattern used by ls (ls /dev/<topo_lvm_disk_pattern>) to find the disks to add to the LVM volume group"
   type        = string
@@ -266,6 +265,12 @@ variable "topo_lvm_controller_replicas" {
   description = "Number of replicas for the topo_lvm controller"
   type        = number
   default     = 2
+}
+
+variable "pvc_storage_class" {
+  default = "topolvm-provisioner"
+  type = string
+  description = "Storage class to use for PVC"
 }
 
 variable "nginx_ingress_helm_chart_version" {
@@ -295,4 +300,33 @@ variable "deploy_nginx_ingress" {
   description = "Deploy a nginx ingress controller"
   type        = bool
   default     = true
+}
+
+variable "enable_pdf_render_service" {
+  description = "Enable PDF render service"
+  type        = bool
+  default     = false
+}
+
+variable "pdf_render_service_image" {
+  description = "Docker image of the PDF render service"
+  type        = string
+}
+
+variable "pdf_render_service_node_count" {
+  description = "The replica count of the PDF render service"
+  type        = number
+  default     = 2
+}
+
+variable "pdf_render_service_port" {
+  description = "Port of the PDF render service"
+  type        = string
+  default     = "5123"
+}
+
+variable "enable_scheduled_report" {
+  description = "Enable scheduled report functionality"
+  type        = bool
+  default     = false
 }

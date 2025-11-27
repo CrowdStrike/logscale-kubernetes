@@ -28,7 +28,7 @@ module "kafka" {
   strimzi_operator_chart_version                = var.strimzi_operator_chart_version
   strimzi_operator_repo                         = var.strimzi_operator_repo
 
-  kube_storage_class_for_kafka                  = local.node_group_definitions["kafka_broker_data_storage_class"]
+  kube_storage_class_for_kafka                  = lookup(local.node_group_definitions, "kafka_broker_data_storage_class", var.pvc_storage_class)
   kafka_broker_pod_replica_count                = local.node_group_definitions["kafka_broker_pod_replica_count"]
   kafka_broker_resources                        = local.node_group_definitions["kafka_broker_resources"]
   kafka_broker_data_disk_size                   = local.node_group_definitions["kafka_broker_data_disk_size"]
@@ -75,9 +75,9 @@ module "logscale-prereqs" {
   use_topo_lvm                                  = var.use_topo_lvm
 
   # Storage class configuration for conditional topo-lvm deployment
-  kafka_broker_data_storage_class               = local.node_group_definitions["kafka_broker_data_storage_class"]
-  logscale_ui_data_storage_class                = lookup(local.node_group_definitions, "logscale_ui_data_disk_type", "topolvm-provisioner")
-  logscale_ingest_data_storage_class            = lookup(local.node_group_definitions, "logscale_ingest_data_disk_type", "topolvm-provisioner")
+  kafka_broker_data_storage_class               = lookup(local.node_group_definitions, "kafka_broker_data_storage_class", var.pvc_storage_class)
+  logscale_ui_data_storage_class                = lookup(local.node_group_definitions, "logscale_ui_data_disk_type", var.pvc_storage_class)
+  logscale_ingest_data_storage_class            = lookup(local.node_group_definitions, "logscale_ingest_data_disk_type", var.pvc_storage_class)
   
   nginx_ingress_helm_chart_version              = var.nginx_ingress_helm_chart_version
   deploy_nginx_ingress                          = var.deploy_nginx_ingress
@@ -142,17 +142,17 @@ module "logscale" {
   logscale_digest_pod_count                     = local.node_group_definitions["logscale_digest_pod_count"]
   logscale_digest_resources                     = local.node_group_definitions["logscale_digest_resources"]
   logscale_digest_data_disk_size                = local.node_group_definitions["logscale_digest_data_disk_size"]
-  kube_storage_class_for_logscale               = lookup(local.node_group_definitions, "logscale_digest_data_disk_type", "topolvm-provisioner")
+  kube_storage_class_for_logscale               = lookup(local.node_group_definitions, "logscale_digest_data_disk_type", var.pvc_storage_class)
   
   logscale_ui_resources                         = local.node_group_definitions["logscale_ui_resources"]
   logscale_ui_pod_count                         = local.node_group_definitions["logscale_ui_pod_count"]
   logscale_ui_data_disk_size                    = local.node_group_definitions["logscale_ui_data_disk_size"]
-  kube_storage_class_for_logscale_ui            = lookup(local.node_group_definitions, "logscale_ui_data_disk_type", "topolvm-provisioner")
+  kube_storage_class_for_logscale_ui            = lookup(local.node_group_definitions, "logscale_ui_data_disk_type", var.pvc_storage_class)
 
   logscale_ingest_pod_count                     = local.node_group_definitions["logscale_ingest_pod_count"]
   logscale_ingest_resources                     = local.node_group_definitions["logscale_ingest_resources"]
   logscale_ingest_data_disk_size                = local.node_group_definitions["logscale_ingest_data_disk_size"]
-  kube_storage_class_for_logscale_ingest        = lookup(local.node_group_definitions, "logscale_ingest_data_disk_type", "topolvm-provisioner")
+  kube_storage_class_for_logscale_ingest        = lookup(local.node_group_definitions, "logscale_ingest_data_disk_type", var.pvc_storage_class)
 
   # Kafka - BYOK / Strimzi
   provision_kafka_servers                       = var.provision_kafka_servers
@@ -161,6 +161,10 @@ module "logscale" {
   logscale_public_fqdn                          = var.logscale_public_fqdn
 
   use_custom_certificate                        = var.use_own_certificate_for_ingress
+
+  enable_pdf_render_service                     = var.enable_pdf_render_service
+  pdf_render_service_image                      = var.pdf_render_service_image
+  pdf_render_service_node_count                 = var.pdf_render_service_node_count
 
   # In the pre-req module, we store kuberentes secrets used to configure
   # logscale which are referenced here.

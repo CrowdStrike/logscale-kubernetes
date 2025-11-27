@@ -88,8 +88,29 @@ locals {
         name = "KAFKA_COMMON_SSL_TRUSTSTORE_LOCATION"
         value = "/tmp/kafka/ca.p12"
       },
+      {
+        name = "ENABLE_SCHEDULED_REPORT"
+        value = var.enable_pdf_render_service ? var.enable_scheduled_report : false
+      },
+      var.enable_pdf_render_service ? local.pdf_render_service_url : null
     ]
-  
+
+  pdf_render_service_url = {
+    name = "DEFAULT_PDF_RENDER_SERVICE_URL"
+    value = "http://pdf-render-service:${var.pdf_render_service_port}"
+  }
+  # pdf_render_service_env_vars = [
+  #     {
+  #       name = "DEFAULT_PDF_RENDER_SERVICE_URL"
+  #       value = "http://pdf-render-service:${var.pdf_render_service_port}"
+  #     },
+  #     {
+  #       name = "ENABLE_SCHEDULED_REPORT"
+  #       value = var.enable_scheduled_report
+  #     },
+  # ]
+
+  # commonEnvironmentVariables = var.enable_pdf_render_service ? concat(local.baseEnvironmentVariables, local.pdf_render_service_env_vars) : baseEnvironmentVariables
 
   # If this is a bring-your-own-kafka situation, we need to remove these settings from the above list
   kafka_env_configs_remove = [ "KAFKA_COMMON_SSL_TRUSTSTORE_TYPE", "KAFKA_COMMON_SSL_TRUSTSTORE_PASSWORD", "KAFKA_COMMON_SSL_TRUSTSTORE_LOCATION" ]
@@ -206,7 +227,7 @@ locals {
   target_replication_factor = var.target_replication_factor
 
   # HumioCluster kubernetes manifest settings
-  humiocluster_manifest_api_version = "core.humio.com/v1alpha1"
+  humio_manifest_api_version = "core.humio.com/v1alpha1"
   humiocluster_manifest_kind = "HumioCluster"
 
   ui_node_pool_spec = {
@@ -449,7 +470,7 @@ locals {
 # Define the humio cluster based on our given inputs
 resource "kubernetes_manifest" "humio_cluster" {
   manifest = {
-    apiVersion                        = local.humiocluster_manifest_api_version
+    apiVersion                        = local.humio_manifest_api_version
     kind                              = local.humiocluster_manifest_kind
 
     metadata = {

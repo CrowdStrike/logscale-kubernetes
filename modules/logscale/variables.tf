@@ -197,3 +197,32 @@ variable "enable_nginx_ingress" {
   type        = bool
   default     = true
 }
+
+variable "enable_pdf_render_service" {
+  description = "Enable PDF render service"
+  type        = bool
+  default     = true
+}
+
+variable "pdf_render_service_image" {
+  description = "Docker image of the PDF render service"
+  type        = string
+}
+
+variable "pdf_render_service_node_count" {
+  description = "The replica count of the PDF render service"
+  type        = number
+  default     = 2
+}
+
+variable "pdf_render_service_port" {
+  description = "Port of the PDF render service"
+  type        = string
+  default     = "5123"
+}
+
+variable "enable_scheduled_report" {
+  description = "Enable scheduled report functionality"
+  type        = bool
+  default     = true
+}
