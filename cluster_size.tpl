@@ -1,12 +1,11 @@
 ${jsonencode(
 {
     // This template specifies the available parameters for the different sizes of LogScale clusters
-    // system_node          -> AKS system nodes for running system pod functions like coredns
-    // logscale_digest      -> AKS nodes dedicated to core logscale systems (NVME attached storage) 
-    // logscale_ingress     -> AKS nodes dedicated to proxy for access to control system access 
-    // logscale_ingest      -> AKS nodes dedicated to logscale ingest nodes
-    // logscale_ui          -> AKS nodes dedicated to UI nodes that do not handle data digest
-    // strimzi_node         -> AKS nodes dedicated to strimzi kafka
+    // logscale_digest    -> nodes dedicated to core logscale systems (NVME attached storage) 
+    // logscale_ingress   -> nodes dedicated to proxy for access to control system access 
+    // logscale_ingest    -> nodes dedicated to logscale ingest nodes
+    // logscale_ui        -> nodes dedicated to UI nodes that do not handle data digest
+    // kafka_node         -> nodes dedicated to strimzi kafka
 
     "xsmall": {
         // kafka nodes

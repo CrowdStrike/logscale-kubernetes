@@ -63,12 +63,11 @@ resource "kubernetes_daemon_set_v1" "lvm-setup" {
               fi
             done
             
-            # If no NVMe, check for /dev/sdb (common temp disk on Azure)
-            # NOTE: /dev/sdb cannot be reclaimed from container - it's mounted by Azure before K8s starts
+            # If no NVMe, check for /dev/sdb (common temp disk)
+            # NOTE: /dev/sdb cannot be reclaimed from container - it's mounted before K8s starts
             # This would require a custom script extension or cloud-init to work properly
             # if [ -z "$available_disks" ] && [ -b /dev/sdb ]; then
             #   echo "Found /dev/sdb, but cannot unmount from container context"
-            #   echo "Consider using Azure Custom Script Extension for disk reclamation"
             # fi
 
             echo "Available disks: $available_disks"

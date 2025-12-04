@@ -1,7 +1,7 @@
 ![CrowdStrike Falcon](https://raw.githubusercontent.com/CrowdStrike/falconpy/main/docs/asset/cs-logo.png)
 
 # Security
-This document outlines security policy and procedures for the CrowdStrike Logscale Azure project.
+This document outlines security policy and procedures for the CrowdStrike Logscale Kubernetes project.
 + [Supported versions](#supported-versions)
 + [Reporting a potential security vulnerability](#reporting-a-potential-security-vulnerability)
 + [Disclosure and Mitigation Process](#disclosure-and-mitigation-process)
@@ -15,8 +15,8 @@ When discovered, we release security vulnerability patches for the most recent r
 We have multiple avenues to receive security-related vulnerability reports.
 
 Please report suspected security vulnerabilities by:
-+ Submitting a [bug](https://github.com/CrowdStrike/logscale-azure/issues)
-+ Submitting a [pull request](https://github.com/CrowdStrike/logscale-azure/pulls) to potentially resolve the issue
++ Submitting a [bug](https://github.com/CrowdStrike/logscale-kubernetes/issues)
++ Submitting a [pull request](https://github.com/CrowdStrike/logscale-kubernetes/pulls) to potentially resolve the issue
 + Sending an email to  oss-security@crowdstrike.com
 
 ## Disclosure and mitigation process
@@ -35,4 +35,4 @@ will coordinate the related fix and release process, involving the following ste
     the Powershell marketplace.
 
 ## Comments
-If you have suggestions on how this process could be improved, please let us know by [creating an issue](https://github.com/CrowdStrike/logscale-azure/issues).
+If you have suggestions on how this process could be improved, please let us know by [creating an issue](https://github.com/CrowdStrike/logscale-kubernetes/issues).

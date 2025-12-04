@@ -12,14 +12,18 @@
  * 
  */
 
+resource "null_resource" "logscale_ns" {
+  triggers = {
+    namespace_name = var.k8s_namespace_prefix
+  }
 
-resource "kubernetes_manifest" "logscale_ns" {
-  manifest = {
-    apiVersion = "v1"
-    kind       = "Namespace"
-    metadata = {
-      name = var.k8s_namespace_prefix
-    }
+  provisioner "local-exec" {
+    command = "kubectl create namespace ${var.k8s_namespace_prefix} --dry-run=client -o yaml | kubectl apply -f -"
+  }
+
+  provisioner "local-exec" {
+    when = destroy
+    command = "kubectl delete namespace ${self.triggers.namespace_name} --timeout=60s --ignore-not-found=true"
   }
 }
 

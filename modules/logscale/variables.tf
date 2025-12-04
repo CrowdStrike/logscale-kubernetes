@@ -82,7 +82,7 @@ variable "logscale_ui_resources" {}
 variable "logscale_ui_pod_count" {}
 variable "logscale_ui_data_disk_size" {}
 variable "kube_storage_class_for_logscale_ui" {
-  description = "In AKS, we expect to use the 'default' storage class for managed SSD but this could be any storage class you have configured in kubernetes."
+  description = "Storage class to be used for LogScale UI PVCs."
   default = "default"
   type = string
 }
@@ -92,7 +92,7 @@ variable "logscale_ingest_pod_count" {}
 variable "logscale_ingest_resources" {}
 variable "logscale_ingest_data_disk_size" {}
 variable "kube_storage_class_for_logscale_ingest" {
-  description = "In AKS, we expect to use the 'default' storage class for managed SSD but this could be any storage class you have configured in kubernetes."
+  description = "Storage class to be used for LogScale Ingest PVCs."
   default = "default"
   type = string
 }
@@ -179,16 +179,6 @@ variable "logscale_update_strategy" {
       minReadySeconds       = 120
       maxUnavailable        = "50%"
     }    
-}
-
-variable "cloud_provider" {
-  description = "Cloud provider type"
-  type        = string
-  default     = "aws"
-  validation {
-    condition     = contains(["aws", "gcp", "azure"], var.cloud_provider)
-    error_message = "Cloud provider must be aws, gcp, or azure."
-  }
 }
 
 # Enable flags for different ingress types

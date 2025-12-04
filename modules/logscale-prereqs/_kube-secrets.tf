@@ -19,7 +19,7 @@ resource "kubernetes_secret_v1" "static_user_logins" {
   }
 
   depends_on = [
-    kubernetes_manifest.logscale_ns
+    null_resource.logscale_ns
   ]
 }
 
@@ -33,7 +33,7 @@ resource "kubernetes_secret_v1" "logscale_license" {
   }
 
   depends_on = [
-    kubernetes_manifest.logscale_ns
+    null_resource.logscale_ns
   ]
 }
 
@@ -48,11 +48,11 @@ resource "kubernetes_secret_v1" "logscale_endpoint" {
   }
 
   depends_on = [
-    kubernetes_manifest.logscale_ns
+    null_resource.logscale_ns
   ]
 }
 
-# The encryption key given with AZURE_STORAGE_ENCRYPTION_KEY can be any UTF-8 string and will
+# The encryption key given with STORAGE_ENCRYPTION_KEY can be any UTF-8 string and will
 # be used to encrypt the data stored within the bucket. The suggested value is 64 or more random ASCII characters.
 # This encryption is applied prior to bucket upload.
 resource "random_password" "encryption_password" {
@@ -70,6 +70,6 @@ resource "kubernetes_secret_v1" "storage_encryption_key" {
   }
 
   depends_on = [
-    kubernetes_manifest.logscale_ns
+    null_resource.logscale_ns
   ]
 }

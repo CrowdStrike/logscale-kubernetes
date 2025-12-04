@@ -28,7 +28,7 @@ locals {
     }
 
   # Environment variables to apply to all humiocluster pods
-  commonEnvironmentVariables = [
+  commonEnvironmentVariables = concat([
       {
         name = "KAFKA_COMMON_SECURITY_PROTOCOL"
         value = "SSL"
@@ -88,29 +88,20 @@ locals {
         name = "KAFKA_COMMON_SSL_TRUSTSTORE_LOCATION"
         value = "/tmp/kafka/ca.p12"
       },
+    ],
+    var.enable_pdf_render_service ? local.pdf_render_service_env_vars : []
+  )
+
+  pdf_render_service_env_vars = [
+      {
+        name = "DEFAULT_PDF_RENDER_SERVICE_URL"
+        value = "http://pdf-render-service:${var.pdf_render_service_port}"
+      },
       {
         name = "ENABLE_SCHEDULED_REPORT"
-        value = var.enable_pdf_render_service ? var.enable_scheduled_report : false
+        value = var.enable_scheduled_report
       },
-      var.enable_pdf_render_service ? local.pdf_render_service_url : null
-    ]
-
-  pdf_render_service_url = {
-    name = "DEFAULT_PDF_RENDER_SERVICE_URL"
-    value = "http://pdf-render-service:${var.pdf_render_service_port}"
-  }
-  # pdf_render_service_env_vars = [
-  #     {
-  #       name = "DEFAULT_PDF_RENDER_SERVICE_URL"
-  #       value = "http://pdf-render-service:${var.pdf_render_service_port}"
-  #     },
-  #     {
-  #       name = "ENABLE_SCHEDULED_REPORT"
-  #       value = var.enable_scheduled_report
-  #     },
-  # ]
-
-  # commonEnvironmentVariables = var.enable_pdf_render_service ? concat(local.baseEnvironmentVariables, local.pdf_render_service_env_vars) : baseEnvironmentVariables
+  ]
 
   # If this is a bring-your-own-kafka situation, we need to remove these settings from the above list
   kafka_env_configs_remove = [ "KAFKA_COMMON_SSL_TRUSTSTORE_TYPE", "KAFKA_COMMON_SSL_TRUSTSTORE_PASSWORD", "KAFKA_COMMON_SSL_TRUSTSTORE_LOCATION" ]

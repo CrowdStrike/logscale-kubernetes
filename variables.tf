@@ -45,7 +45,7 @@ variable "logscale_cluster_type" {
 }
 
 variable "logscale_cluster_size" {
-  description       = "Size of the cluster to build in Azure. Reference cluster_size.tpl for definitions."
+  description       = "Size of the cluster to build. Reference cluster_size.tpl for definitions."
   type              = string
   default           = "xsmall"
 
