@@ -311,6 +311,7 @@ variable "enable_pdf_render_service" {
 variable "pdf_render_service_image" {
   description = "Docker image of the PDF render service"
   type        = string
+  default     = ""
 }
 
 variable "pdf_render_service_node_count" {
