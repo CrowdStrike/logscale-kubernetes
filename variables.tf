@@ -1,6 +1,6 @@
 variable "resource_name_prefix" {
   type              = string
-  default           = "log"
+  default           = "ls"
   description       = "Identifier attached to named resources to help them stand out. Must be 8 or fewer characters which can include lower case, numbers, and hyphens."
 
   validation {

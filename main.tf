@@ -34,7 +34,7 @@ module "kafka" {
   kafka_broker_data_disk_size                   = local.node_group_definitions["kafka_broker_data_disk_size"]
   num_kafka_volumes                             = local.node_group_definitions["kafka_broker_disk_count"]
  
-  name_prefix                                   = local.resource_name_prefix
+  name_prefix                                   = var.resource_name_prefix
         
   providers = {
     kubernetes = kubernetes
@@ -90,7 +90,7 @@ module "logscale-prereqs" {
   cert_issuer_name                              = var.cert_issuer_name
 
   # Used everywhere for naming of resources
-  name_prefix                                   = local.resource_name_prefix
+  name_prefix                                   = var.resource_name_prefix
 
   # Configure the kubernetes provider    
   providers = {
@@ -135,7 +135,7 @@ module "logscale" {
   enable_nginx_ingress                          = var.deploy_nginx_ingress
 
   # Cloud-agnostic configuration
-  name_prefix                                   = local.resource_name_prefix
+  name_prefix                                   = var.resource_name_prefix
   
   target_replication_factor                     = local.node_group_definitions["logscale_target_replication_factor"]
 
