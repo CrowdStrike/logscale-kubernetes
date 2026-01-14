@@ -13,11 +13,11 @@ variable "humio_operator_version" {
 
 variable "strimzi_operator_version" {
   description = "Used to get CRDs for strimzi and install them."
-  type = string
+  type        = string
 }
 
 variable "provision_kafka_servers" {
   description = "Set this to true to provision strimzi kafka within this kubernetes cluster. It should be false if you are bringing your own kafka implementation."
-  default = true
-  type = bool
+  default     = true
+  type        = bool
 }

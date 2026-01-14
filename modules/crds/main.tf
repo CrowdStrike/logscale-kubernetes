@@ -75,44 +75,44 @@ data "http" "humiobootstraptokens" {
 data "http" "humiofeatureflags" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiofeatureflags.yaml"
 }
- data "http" "humiogroups" {
+data "http" "humiogroups" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiogroups.yaml"
 }
- data "http" "humioorganizationpermissionroles" {
+data "http" "humioorganizationpermissionroles" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioorganizationpermissionroles.yaml"
 }
- data "http" "humiosystempermissionroles" {
+data "http" "humiosystempermissionroles" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiosystempermissionroles.yaml"
 }
- data "http" "humiousers" {
+data "http" "humiousers" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiousers.yaml"
 }
- data "http" "humioviewpermissionroles" {
+data "http" "humioviewpermissionroles" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioviewpermissionroles.yaml"
 }
- data "http" "humioipfilters" {
+data "http" "humioipfilters" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioipfilters.yaml"
 }
- data "http" "humiomulticlustersearchviews" {
+data "http" "humiomulticlustersearchviews" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiomulticlustersearchviews.yaml"
 }
- data "http" "humioorganizationtokens" {
+data "http" "humioorganizationtokens" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioorganizationtokens.yaml"
 }
- data "http" "humiopdfrenderservices" {
+data "http" "humiopdfrenderservices" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiopdfrenderservices.yaml"
 }
- data "http" "humiosystemtokens" {
+data "http" "humiosystemtokens" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiosystemtokens.yaml"
 }
- data "http" "humioviewtokens" {
+data "http" "humioviewtokens" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioviewtokens.yaml"
 }
 
 # Install Humio CRDs using null_resource to avoid for_each issues
 resource "null_resource" "install_humio_crds" {
   count = var.humio_operator_version != null ? 1 : 0
-  
+
   provisioner "local-exec" {
     command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioclusters.yaml"
   }

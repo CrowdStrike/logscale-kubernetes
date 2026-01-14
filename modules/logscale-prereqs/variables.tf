@@ -3,8 +3,14 @@ variable "logscale_cluster_type" {
   type        = string
 }
 
+variable "cloud_provider" {
+  description = "Cloud provider (oke, eks, aks, gke)"
+  type        = string
+  default     = "oke"
+}
+
 variable "name_prefix" {
-  type = string
+  type        = string
   description = "Identifier attached to named resources to help them stand out."
 }
 
@@ -54,19 +60,25 @@ variable "cm_version" {
 }
 
 variable "topo_lvm_chart_version" {
-  type = string
+  type        = string
   description = "TopoLVM Chart version to use for installation."
 }
 
 variable "k8s_namespace_prefix" {
-  description       = "Multiple namespaces will be created to contain resources using this prefix."
-  type              = string
-  default           = "log"
+  description = "Multiple namespaces will be created to contain resources using this prefix."
+  type        = string
+  default     = "log"
+}
+
+variable "existing_logscale_namespace" {
+  description = "When true, check if the primary Logscale namespace already exists and reuse it instead of creating a duplicate."
+  type        = bool
+  default     = true
 }
 
 variable "use_topo_lvm" {
-  default = true
-  type = bool
+  default     = true
+  type        = bool
   description = "Use TopoLVM for volume group management"
 }
 
@@ -82,59 +94,65 @@ variable "topo_lvm_controller_replicas" {
   default     = 2
 }
 
+variable "lvm_target_node_labels" {
+  description = "List of node labels (k8s-app values) where LVM preparation should run"
+  type        = list(string)
+  default     = []
+}
+
 variable "use_custom_certificate" {
-  default = false
-  type = bool
+  default     = false
+  type        = bool
   description = "Use a custom provided certificate on the frontend instead of Let's Encrypt?"
 }
 
 variable "custom_tls_certificate_keyvault_entry" {
-  type = string
+  type        = string
   description = "The keyvault entry containing the TLS certificate"
-  default = null
+  default     = null
 }
 
 variable "password_rotation_arbitrary_value" {
-  type = string
+  type        = string
   description = "This can be any old value and does not factor into password generation. When changed, it will result in a new password being generated and saved to kubernetes secrets."
-  default = "defaultstring"
+  default     = "defaultstring"
 }
 
 variable "logscale_license" {
-  type = string
+  type        = string
   description = "Your logscale license."
 }
 
 /* These variables control the nginx-ingress controller */
 variable "logscale_ingress_pod_count" {
-  type = number
+  type        = number
   description = "The number of ingress pods to start with."
 }
 variable "logscale_ingress_min_pod_count" {
-  type = number
+  type        = number
   description = "The minimum number of ingress pods."
 }
 variable "logscale_ingress_max_pod_count" {
-  type = number
+  type        = number
   description = "The maximum number of ingress pods."
 }
 variable "logscale_ingress_resources" {
-  type = map
+  type        = map(any)
   description = "The resource requests and limits for cpu and memory to apply ingress pods formatted in a json map. Example: {\"limits\": {\"cpu\": 2, \"memory\": \"2Gi\"}, \"requests\": {\"cpu\": 2, \"memory\": \"2Gi\"}}"
 }
 variable "logscale_ingress_data_disk_size" {
   description = "The size of the data disk to provision for each ingress pod. (i.e. 20Gi)"
-  type = string
+  type        = string
 }
 
 variable "logscale_public_fqdn" {
-  type = string
+  type        = string
   description = "The FQDN tied to the public IP address for logscale ingress. This is the resource that will have a certificate provisioned from let's encrypt."
 }
 
 variable "nginx_ingress_helm_chart_version" {
   description = "The version of nginx-ingress to install in the environment. Reference: github.com/kubernetes/ingress-nginx for helm chart version to nginx version mapping."
-  type = string
+  type        = string
 }
 
 variable "deploy_nginx_ingress" {
@@ -157,3 +175,28 @@ variable "logscale_ingest_data_storage_class" {
   description = "Storage class for LogScale ingest data"
   type        = string
 }
+
+variable "primary_encryption_key_value" {
+  description = "Primary cluster's storage encryption key value (for standby clusters from remote state). If provided, uses this value instead of generating a new one."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "dr" {
+  description = "Disaster Recovery mode. Set to 'active' for primary cluster, 'standby' for DR replica cluster, or '' (empty) for non-DR single cluster."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = contains(["active", "standby", ""], var.dr)
+    error_message = "The dr variable must be 'active', 'standby', or '' (empty for non-DR)."
+  }
+}
+
+variable "skip_cluster_issuer" {
+  description = "Skip creation of the Let's Encrypt ClusterIssuer. Set to true when using DNS-01 solver managed externally (e.g., OCI DNS webhook)."
+  type        = bool
+  default     = false
+}
+

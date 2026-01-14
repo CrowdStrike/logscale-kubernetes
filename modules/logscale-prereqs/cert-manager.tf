@@ -8,7 +8,7 @@ data "kubernetes_resources" "check_cert_manager_crd" {
 # Deploy cert manager via helm
 # This is primarily used for the creation of a Let's Encrypt certificate for the ingress frontend
 resource "helm_release" "cert_manager" {
-  count      = var.use_custom_certificate ? 0 : 1
+  count = var.use_custom_certificate ? 0 : 1
 
   name       = "cert-manager"
   repository = var.cm_repo

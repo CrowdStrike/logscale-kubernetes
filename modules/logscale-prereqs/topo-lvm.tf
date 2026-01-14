@@ -1,10 +1,19 @@
+locals {
+  topo_lvm_node_labels = length(var.lvm_target_node_labels) > 0 ? distinct(var.lvm_target_node_labels) : distinct(concat(
+    ["logscale-digest"],
+    var.kafka_broker_data_storage_class == "topolvm-provisioner" ? ["strimzi"] : [],
+    var.logscale_ui_data_storage_class == "topolvm-provisioner" ? ["logscale-ui"] : [],
+    var.logscale_ingest_data_storage_class == "topolvm-provisioner" ? ["logscale-ingest"] : []
+  ))
+}
+
 # This resource sets up a small container that provisions disk. This is done as a daemonset to guarantee execution
 # on every target node (NVME-backed) nodes. The pod restarts on failure.
 resource "kubernetes_daemon_set_v1" "lvm-setup" {
   count = var.use_topo_lvm ? 1 : 0
   metadata {
-    name          = "${var.name_prefix}-lvm-setup"
-    namespace     = kubernetes_namespace_v1.logscale-topo.metadata[0].name
+    name      = "${var.name_prefix}-lvm-setup"
+    namespace = kubernetes_namespace_v1.logscale-topo.metadata[0].name
   }
 
   spec {
@@ -28,12 +37,7 @@ resource "kubernetes_daemon_set_v1" "lvm-setup" {
                 match_expressions {
                   key      = "k8s-app"
                   operator = "In"
-                  values   = concat(
-                    ["logscale-digest"],
-                    var.kafka_broker_data_storage_class == "topolvm-provisioner" ? ["strimzi"] : [],
-                    var.logscale_ui_data_storage_class == "topolvm-provisioner" ? ["logscale-ui"] : [],
-                    var.logscale_ingest_data_storage_class == "topolvm-provisioner" ? ["logscale-ingest"] : []
-                  )
+                  values   = local.topo_lvm_node_labels
                 }
               }
             }
@@ -41,9 +45,9 @@ resource "kubernetes_daemon_set_v1" "lvm-setup" {
         }
 
         automount_service_account_token = false
-        
+
         container {
-          name = "lvm-setup"
+          name  = "lvm-setup"
           image = "debian:bookworm-slim"
           command = [
             "/bin/bash",
@@ -63,11 +67,12 @@ resource "kubernetes_daemon_set_v1" "lvm-setup" {
               fi
             done
             
-            # If no NVMe, check for /dev/sdb (common temp disk)
-            # NOTE: /dev/sdb cannot be reclaimed from container - it's mounted before K8s starts
+            # If no NVMe, check for /dev/sdb (common temp disk on Azure)
+            # NOTE: /dev/sdb cannot be reclaimed from container - it's mounted by Azure before K8s starts
             # This would require a custom script extension or cloud-init to work properly
             # if [ -z "$available_disks" ] && [ -b /dev/sdb ]; then
             #   echo "Found /dev/sdb, but cannot unmount from container context"
+            #   echo "Consider using Azure Custom Script Extension for disk reclamation"
             # fi
 
             echo "Available disks: $available_disks"
@@ -96,7 +101,7 @@ resource "kubernetes_daemon_set_v1" "lvm-setup" {
             # privileged mode is necessary due to this container needing to modify
             # disks for the underlying node.
             privileged = true
-            
+
             seccomp_profile {
               type = "RuntimeDefault"
             }
@@ -105,15 +110,53 @@ resource "kubernetes_daemon_set_v1" "lvm-setup" {
           resources {
             limits = {
               memory = "200Mi"
-              cpu = "100m"
+              cpu    = "100m"
             }
             requests = {
               memory = "200Mi"
-              cpu = "100m"
+              cpu    = "100m"
             }
           }
-        
+
+          dynamic "volume_mount" {
+            for_each = var.cloud_provider == "oke" ? [1] : []
+            content {
+              name       = "host-run-lvm"
+              mount_path = "/run/lvm"
+            }
+          }
+
+          dynamic "volume_mount" {
+            for_each = var.cloud_provider == "oke" ? [1] : []
+            content {
+              name       = "host-etc-lvm"
+              mount_path = "/etc/lvm"
+            }
+          }
         }
+
+        dynamic "volume" {
+          for_each = var.cloud_provider == "oke" ? [1] : []
+          content {
+            name = "host-run-lvm"
+            host_path {
+              path = "/run/lvm"
+              type = "DirectoryOrCreate"
+            }
+          }
+        }
+
+        dynamic "volume" {
+          for_each = var.cloud_provider == "oke" ? [1] : []
+          content {
+            name = "host-etc-lvm"
+            host_path {
+              path = "/etc/lvm"
+              type = "DirectoryOrCreate"
+            }
+          }
+        }
+
         volume {
           name = "host-root"
           host_path {
@@ -127,15 +170,15 @@ resource "kubernetes_daemon_set_v1" "lvm-setup" {
 
 # Wait for cert_manager
 resource "time_sleep" "wait_for_cert_manager" {
-  count = var.use_topo_lvm ? 1 : 0
-  depends_on = [helm_release.cert_manager]
+  count           = var.use_topo_lvm ? 1 : 0
+  depends_on      = [helm_release.cert_manager]
   create_duration = "1m"
 }
 
 # Topo LVM Controller Install
 resource "helm_release" "topo_lvm_sc" {
   count = var.use_topo_lvm ? 1 : 0
-  name             = "${var.name_prefix}-topo-lvm"
+  name  = "${var.name_prefix}-topo-lvm"
 
   repository       = "https://topolvm.github.io/topolvm"
   chart            = "topolvm"
@@ -159,8 +202,8 @@ resource "helm_release" "topo_lvm_sc" {
   ]
 
   set {
-    name                = "controller.replicaCount"
-    value               = "${var.topo_lvm_controller_replicas}"
+    name  = "controller.replicaCount"
+    value = var.topo_lvm_controller_replicas
   }
 
   depends_on = [

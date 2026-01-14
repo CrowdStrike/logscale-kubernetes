@@ -1,4 +1,4 @@
-/** 
+/**
  * ## Module: kubernetes/logscale-prereqs
  * This module installs a number of prerequisites for running Logscale in Kubernetes to include:
  * * Kubernetes Namespaces
@@ -6,13 +6,18 @@
  * * Let's Encrypt Issuer manifest
  * * NGINX Ingress for managing connections to Logscale
  * * Topo LVM for managing storage on NVME-enabled nodes
- * 
+ *
  * Additionally, the module creates a number of kubernetes secrets used by Logscale. This way, you can change/destroy/reapply the Logscale
  * module without impact to these values.
- * 
+ *
  */
 
+# Create the logscale namespace only if it doesn't already exist externally.
+# When existing_logscale_namespace = true, the namespace is managed by a parent module
+# (e.g., OCI pre-install) and this resource is skipped to avoid duplicate management.
 resource "null_resource" "logscale_ns" {
+  count = var.existing_logscale_namespace ? 0 : 1
+
   triggers = {
     namespace_name = var.k8s_namespace_prefix
   }
@@ -22,8 +27,8 @@ resource "null_resource" "logscale_ns" {
   }
 
   provisioner "local-exec" {
-    when = destroy
-    command = "kubectl delete namespace ${self.triggers.namespace_name} --timeout=60s --ignore-not-found=true"
+    when    = destroy
+    command = "kubectl delete namespace ${self.triggers.namespace_name} --timeout=180s --ignore-not-found=true"
   }
 }
 
@@ -41,10 +46,8 @@ resource "kubernetes_namespace_v1" "logscale-topo" {
 
 resource "kubernetes_namespace_v1" "cert_manager" {
   #count                     = var.use_custom_certificate ? 0 : 1
-  count                     = 1
+  count = 1
   metadata {
     name = "${var.k8s_namespace_prefix}-cert"
   }
 }
-
-
