@@ -11,6 +11,10 @@ resource "helm_release" "nginx_ingress" {
   version    = var.nginx_ingress_helm_chart_version
   chart      = "ingress-nginx"
 
+  # Increased timeout to accommodate cloud provider RBAC propagation delays
+  # Azure role assignments can take up to 10 minutes to propagate
+  timeout = 900
+
   dynamic "set" {
     for_each = var.nginx_ingress_sets
 
