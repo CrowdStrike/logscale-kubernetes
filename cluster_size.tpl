@@ -17,9 +17,10 @@ ${jsonencode(
         "kafka_broker_data_storage_class": "topolvm-provisioner",
 
         // digest nodes
+        // Request 6 CPU to leave ~25% headroom for k8s system overhead (aligned with AWS)
         "logscale_digest_pod_count": 3,
         "logscale_digest_data_disk_size": "1500Gi",
-        "logscale_digest_resources": {"limits": {"cpu": 8, "memory": "48Gi"}, "requests": {"cpu": 8, "memory": "48Gi"}},
+        "logscale_digest_resources": {"limits": {"cpu": 6, "memory": "48Gi"}, "requests": {"cpu": 6, "memory": "48Gi"}},
         "logscale_target_replication_factor": 2,
 
         // ingest nodes
@@ -32,7 +33,7 @@ ${jsonencode(
         "logscale_ingress_max_node_count": 3,
         "logscale_ingress_desired_node_count": 2,
         "logscale_ingress_data_disk_size": "64Gi",
-        "logscale_ingress_resources": {"limits": {"cpu": 1, "memory": "2Gi"}, "requests": {"cpu": 2, "memory": "4Gi"}},
+        "logscale_ingress_resources": {"limits": {"cpu": 2, "memory": "4Gi"}, "requests": {"cpu": 2, "memory": "4Gi"}},
         "logscale_basic_ingress_resources": {"limits": {"cpu": 1, "memory": "1Gi"}, "requests": {"cpu": 1, "memory": "1Gi"}},
 
         // ui nodes
@@ -65,7 +66,7 @@ ${jsonencode(
         "logscale_ingress_max_node_count": 21,
         "logscale_ingress_desired_node_count": 3,
         "logscale_ingress_data_disk_size": "64Gi",
-        "logscale_ingress_resources": {"limits": {"cpu": 1, "memory": "2Gi"}, "requests": {"cpu": 2, "memory": "4Gi"}},
+        "logscale_ingress_resources": {"limits": {"cpu": 2, "memory": "4Gi"}, "requests": {"cpu": 2, "memory": "4Gi"}},
         "logscale_basic_ingress_resources": {"limits": {"cpu": 2, "memory": "2Gi"}, "requests": {"cpu": 2, "memory": "2Gi"}},
 
         // ui nodes
