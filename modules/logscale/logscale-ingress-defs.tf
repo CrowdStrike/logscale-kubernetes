@@ -118,7 +118,7 @@ locals {
 }
 
 # This will serve as the default ingest ClusterIP for nginx ingress
-resource "kubernetes_service" "logscale_ingest_clusterip" {
+resource "kubernetes_service_v1" "logscale_ingest_clusterip" {
   count = var.enable_nginx_ingress ? 1 : 0
 
   metadata {
@@ -138,7 +138,7 @@ resource "kubernetes_service" "logscale_ingest_clusterip" {
 }
 
 # This ClusterIP will serve as the dedicated UI point for nginx ingress
-resource "kubernetes_service" "logscale_ui_clusterip" {
+resource "kubernetes_service_v1" "logscale_ui_clusterip" {
   count = var.enable_nginx_ingress ? 1 : 0
 
   metadata {
@@ -182,7 +182,7 @@ resource "kubernetes_ingress_v1" "logscale_ingress_ui" {
           path_type = "Prefix"
           backend {
             service {
-              name = kubernetes_service.logscale_ui_clusterip[0].metadata[0].name
+              name = kubernetes_service_v1.logscale_ui_clusterip[0].metadata[0].name
               port {
                 number = 8080
               }
@@ -201,7 +201,7 @@ resource "kubernetes_ingress_v1" "logscale_ingress_ui" {
           path_type = "Prefix"
           backend {
             service {
-              name = kubernetes_service.logscale_ingest_clusterip[0].metadata[0].name
+              name = kubernetes_service_v1.logscale_ingest_clusterip[0].metadata[0].name
               port {
                 number = 8080
               }
@@ -222,7 +222,7 @@ resource "kubernetes_ingress_v1" "logscale_ingress_ui" {
             path_type = "Prefix"
             backend {
               service {
-                name = kubernetes_service.logscale_ui_clusterip[0].metadata[0].name
+                name = kubernetes_service_v1.logscale_ui_clusterip[0].metadata[0].name
                 port {
                   number = 8080
                 }
@@ -244,7 +244,7 @@ resource "kubernetes_ingress_v1" "logscale_ingress_ui" {
             path_type = "Prefix"
             backend {
               service {
-                name = kubernetes_service.logscale_ingest_clusterip[0].metadata[0].name
+                name = kubernetes_service_v1.logscale_ingest_clusterip[0].metadata[0].name
                 port {
                   number = 8080
                 }

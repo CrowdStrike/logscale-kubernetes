@@ -61,7 +61,7 @@ locals {
   effective_encryption_key = var.primary_encryption_key_value != null ? var.primary_encryption_key_value : random_password.encryption_password[0].result
 }
 
-resource "kubernetes_secret" "storage_encryption_key" {
+resource "kubernetes_secret_v1" "storage_encryption_key" {
   metadata {
     name      = "${var.name_prefix}-storage-encryption"
     namespace = var.k8s_namespace_prefix
