@@ -29,7 +29,7 @@ variable "kafka_broker_data_disk_size" {
 }
 
 variable "kube_storage_class_for_kafka" {
-  description = "In AKS, we expect to use the 'default' storage class for managed SSD but this could be any storage class you have configured in kubernetes."
+  description = "Kubernetes storage class to use for Kafka brokers. Defaults to 'default' but can be any storage class configured in your cluster."
   default     = "default"
   type        = string
 }

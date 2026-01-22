@@ -68,8 +68,7 @@ resource "kubernetes_manifest" "kafka_cluster" {
     }
     "spec" = {
       "kafka" = {
-        "version"         = "4.0.0",
-        "metadataVersion" = "4.0-IV0"
+        "version" = "3.9.0",
         "config" = {
           "auto.create.topics.enable"                = true
           "default.replication.factor"               = 3
@@ -186,7 +185,7 @@ resource "kubernetes_manifest" "kafka-node-pool" {
           {
             id            = 0
             type          = "persistent-claim"
-            deleteClaim   = true
+            deleteClaim   = false
             size          = var.kafka_broker_data_disk_size
             type          = "persistent-claim"
             class         = var.kube_storage_class_for_kafka
@@ -197,7 +196,7 @@ resource "kubernetes_manifest" "kafka-node-pool" {
           for idx in range(1, var.num_kafka_volumes) : {
             id          = idx + 1
             type        = "persistent-claim"
-            deleteClaim = true
+            deleteClaim = false
             size        = var.kafka_broker_data_disk_size
             type        = "persistent-claim"
             class       = var.kube_storage_class_for_kafka

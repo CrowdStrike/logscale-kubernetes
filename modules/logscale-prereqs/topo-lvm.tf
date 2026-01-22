@@ -1,12 +1,3 @@
-locals {
-  topo_lvm_node_labels = length(var.lvm_target_node_labels) > 0 ? distinct(var.lvm_target_node_labels) : distinct(concat(
-    ["logscale-digest"],
-    var.kafka_broker_data_storage_class == "topolvm-provisioner" ? ["strimzi"] : [],
-    var.logscale_ui_data_storage_class == "topolvm-provisioner" ? ["logscale-ui"] : [],
-    var.logscale_ingest_data_storage_class == "topolvm-provisioner" ? ["logscale-ingest"] : []
-  ))
-}
-
 # This resource sets up a small container that provisions disk. This is done as a daemonset to guarantee execution
 # on every target node (NVME-backed) nodes. The pod restarts on failure.
 resource "kubernetes_daemon_set_v1" "lvm-setup" {
@@ -37,7 +28,7 @@ resource "kubernetes_daemon_set_v1" "lvm-setup" {
                 match_expressions {
                   key      = "k8s-app"
                   operator = "In"
-                  values   = local.topo_lvm_node_labels
+                  values   = var.lvm_target_node_labels
                 }
               }
             }
@@ -67,12 +58,11 @@ resource "kubernetes_daemon_set_v1" "lvm-setup" {
               fi
             done
             
-            # If no NVMe, check for /dev/sdb (common temp disk on Azure)
-            # NOTE: /dev/sdb cannot be reclaimed from container - it's mounted by Azure before K8s starts
+            # If no NVMe, check for /dev/sdb (common temp disk)
+            # NOTE: /dev/sdb cannot be reclaimed from container - it's mounted before K8s starts
             # This would require a custom script extension or cloud-init to work properly
             # if [ -z "$available_disks" ] && [ -b /dev/sdb ]; then
             #   echo "Found /dev/sdb, but cannot unmount from container context"
-            #   echo "Consider using Azure Custom Script Extension for disk reclamation"
             # fi
 
             echo "Available disks: $available_disks"
@@ -119,40 +109,21 @@ resource "kubernetes_daemon_set_v1" "lvm-setup" {
           }
 
           dynamic "volume_mount" {
-            for_each = var.cloud_provider == "oke" ? [1] : []
+            for_each = var.lvm_extra_host_paths
             content {
-              name       = "host-run-lvm"
-              mount_path = "/run/lvm"
-            }
-          }
-
-          dynamic "volume_mount" {
-            for_each = var.cloud_provider == "oke" ? [1] : []
-            content {
-              name       = "host-etc-lvm"
-              mount_path = "/etc/lvm"
+              name       = volume_mount.value.name
+              mount_path = volume_mount.value.mount_path
             }
           }
         }
 
         dynamic "volume" {
-          for_each = var.cloud_provider == "oke" ? [1] : []
+          for_each = var.lvm_extra_host_paths
           content {
-            name = "host-run-lvm"
+            name = volume.value.name
             host_path {
-              path = "/run/lvm"
-              type = "DirectoryOrCreate"
-            }
-          }
-        }
-
-        dynamic "volume" {
-          for_each = var.cloud_provider == "oke" ? [1] : []
-          content {
-            name = "host-etc-lvm"
-            host_path {
-              path = "/etc/lvm"
-              type = "DirectoryOrCreate"
+              path = volume.value.host_path
+              type = volume.value.type
             }
           }
         }
@@ -191,12 +162,7 @@ resource "helm_release" "topo_lvm_sc" {
     templatefile(
       "${path.module}/helm_values/topo_lvm_sc.yaml.tpl",
       {
-        node_types = concat(
-          ["logscale-digest"],
-          var.kafka_broker_data_storage_class == "topolvm-provisioner" ? ["strimzi"] : [],
-          var.logscale_ui_data_storage_class == "topolvm-provisioner" ? ["logscale-ui"] : [],
-          var.logscale_ingest_data_storage_class == "topolvm-provisioner" ? ["logscale-ingest"] : []
-        )
+        node_types = var.lvm_target_node_labels
       }
     )
   ]

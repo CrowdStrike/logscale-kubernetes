@@ -25,13 +25,13 @@ locals {
   # - The humio-operator reads CA from cluster TLS secret ({cluster-name}), not from caSecretName
   # - See clusterinterface.go line 213: reads from c.managedClusterName, not getCASecretName()
   # For DR standby deployments, the fix is to delete the stale TLS secret before scaling up the operator.
-  # This is implemented in the DR failover Cloud Function.
+  # This is typically implemented in the DR failover automation.
   logscale_tls_spec = {
     enabled = true
   }
 
   # Environment variables to apply to all humiocluster pods
-  commonEnvironmentVariables = [
+  commonEnvironmentVariables = concat([
     {
       name  = "KAFKA_COMMON_SECURITY_PROTOCOL"
       value = "SSL"
@@ -91,6 +91,19 @@ locals {
       name  = "KAFKA_COMMON_SSL_TRUSTSTORE_LOCATION"
       value = "/tmp/kafka/ca.p12"
     },
+    ],
+    var.enable_pdf_render_service ? local.pdf_render_service_env_vars : []
+  )
+
+  pdf_render_service_env_vars = [
+    {
+      name  = "DEFAULT_PDF_RENDER_SERVICE_URL"
+      value = "http://pdf-render-service:${var.pdf_render_service_port}"
+    },
+    {
+      name  = "ENABLE_SCHEDULED_REPORT"
+      value = var.enable_scheduled_report
+    },
   ]
 
   # DR recovery environment variables with simple string values
@@ -99,40 +112,40 @@ locals {
   # Changing env vars during promotion (standby → active) would change the pod hash in humio-operator,
   # triggering pod recreation and data loss with ephemeral PVCs.
   dr_recovery_simple_envvars = var.dr == "" ? [] : concat(
-    var.s3_recover_from_replace_region != null ? [
+    var.bucket_recover_from_replace_region != null ? [
       {
         name  = "S3_RECOVER_FROM_REPLACE_REGION"
-        value = var.s3_recover_from_replace_region
+        value = var.bucket_recover_from_replace_region
       }
     ] : [],
-    var.s3_recover_from_replace_bucket != null ? [
+    var.bucket_recover_from_replace_bucket != null ? [
       {
         name  = "S3_RECOVER_FROM_REPLACE_BUCKET"
-        value = var.s3_recover_from_replace_bucket
+        value = var.bucket_recover_from_replace_bucket
       }
     ] : [],
-    var.s3_recover_from_bucket != null ? [
+    var.bucket_recover_from_bucket != null ? [
       {
         name  = "S3_RECOVER_FROM_BUCKET"
-        value = var.s3_recover_from_bucket
+        value = var.bucket_recover_from_bucket
       }
     ] : [],
-    var.s3_recover_from_region != null ? [
+    var.bucket_recover_from_region != null ? [
       {
         name  = "S3_RECOVER_FROM_REGION"
-        value = var.s3_recover_from_region
+        value = var.bucket_recover_from_region
       }
     ] : [],
-    var.s3_recover_from_endpoint_base != null ? [
+    var.bucket_recover_from_endpoint_base != null ? [
       {
         name  = "S3_RECOVER_FROM_ENDPOINT_BASE"
-        value = var.s3_recover_from_endpoint_base
+        value = var.bucket_recover_from_endpoint_base
       }
     ] : [],
-    var.s3_recover_from_path_style_access != null ? [
+    var.bucket_recover_from_path_style_access != null ? [
       {
         name  = "S3_RECOVER_FROM_PATH_STYLE_ACCESS"
-        value = tostring(var.s3_recover_from_path_style_access)
+        value = tostring(var.bucket_recover_from_path_style_access)
       }
     ] : [],
     var.dr == "standby" ? [
@@ -146,13 +159,13 @@ locals {
   # DR recovery environment variables with secretKeyRef
   # Keep these env vars in BOTH standby AND active DR modes to prevent pod recreation during promotion.
   dr_recovery_secret_envvars = var.dr == "" ? [] : (
-    var.s3_recover_from_encryption_key_secret_name != null && var.s3_recover_from_encryption_key_secret_key != null ? [
+    var.bucket_recover_from_encryption_key_secret_name != null && var.bucket_recover_from_encryption_key_secret_key != null ? [
       {
         name = "S3_RECOVER_FROM_ENCRYPTION_KEY"
         valueFrom = {
           secretKeyRef = {
-            name = var.s3_recover_from_encryption_key_secret_name
-            key  = var.s3_recover_from_encryption_key_secret_key
+            name = var.bucket_recover_from_encryption_key_secret_name
+            key  = var.bucket_recover_from_encryption_key_secret_key
           }
         }
       }
@@ -285,6 +298,9 @@ locals {
   # HumioCluster kubernetes manifest settings
   humiocluster_manifest_api_version = "core.humio.com/v1alpha1"
   humiocluster_manifest_kind        = "HumioCluster"
+
+  # Alias for pdf-render-service.tf
+  humio_manifest_api_version = local.humiocluster_manifest_api_version
 
   ui_node_pool_spec = {
     name = "ui"

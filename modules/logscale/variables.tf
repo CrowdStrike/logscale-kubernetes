@@ -87,7 +87,7 @@ variable "logscale_ui_resources" {}
 variable "logscale_ui_pod_count" {}
 variable "logscale_ui_data_disk_size" {}
 variable "kube_storage_class_for_logscale_ui" {
-  description = "In AKS, we expect to use the 'default' storage class for managed SSD but this could be any storage class you have configured in kubernetes."
+  description = "Kubernetes storage class to use for UI nodes. Defaults to 'default' but can be any storage class configured in your cluster."
   default     = "default"
   type        = string
 }
@@ -97,7 +97,7 @@ variable "logscale_ingest_pod_count" {}
 variable "logscale_ingest_resources" {}
 variable "logscale_ingest_data_disk_size" {}
 variable "kube_storage_class_for_logscale_ingest" {
-  description = "In AKS, we expect to use the 'default' storage class for managed SSD but this could be any storage class you have configured in kubernetes."
+  description = "Kubernetes storage class to use for ingest nodes. Defaults to 'default' but can be any storage class configured in your cluster."
   default     = "default"
   type        = string
 }
@@ -198,14 +198,34 @@ variable "logscale_update_strategy" {
   }
 }
 
-variable "cloud_provider" {
-  description = "Cloud provider type"
+variable "enable_pdf_render_service" {
+  description = "Enable PDF render service"
+  type        = bool
+  default     = true
+}
+
+variable "pdf_render_service_image" {
+  description = "Docker image of the PDF render service"
   type        = string
-  default     = "aws"
-  validation {
-    condition     = contains(["aws", "gcp", "azure"], var.cloud_provider)
-    error_message = "Cloud provider must be aws, gcp, or azure."
-  }
+  default     = ""
+}
+
+variable "pdf_render_service_node_count" {
+  description = "The replica count of the PDF render service"
+  type        = number
+  default     = 2
+}
+
+variable "pdf_render_service_port" {
+  description = "Port of the PDF render service"
+  type        = string
+  default     = "5123"
+}
+
+variable "enable_scheduled_report" {
+  description = "Enable scheduled report functionality"
+  type        = string
+  default     = "true"
 }
 
 # Enable flags for different ingress types
@@ -254,49 +274,49 @@ variable "kubectl_context" {
   default     = ""
 }
 
-variable "s3_recover_from_replace_region" {
+variable "bucket_recover_from_replace_region" {
   description = "Value for S3_RECOVER_FROM_REPLACE_REGION when seeding from a primary bucket."
   type        = string
   default     = null
 }
 
-variable "s3_recover_from_replace_bucket" {
+variable "bucket_recover_from_replace_bucket" {
   description = "Value for S3_RECOVER_FROM_REPLACE_BUCKET."
   type        = string
   default     = null
 }
 
-variable "s3_recover_from_bucket" {
+variable "bucket_recover_from_bucket" {
   description = "Value for S3_RECOVER_FROM_BUCKET."
   type        = string
   default     = null
 }
 
-variable "s3_recover_from_region" {
+variable "bucket_recover_from_region" {
   description = "Value for S3_RECOVER_FROM_REGION."
   type        = string
   default     = null
 }
 
-variable "s3_recover_from_encryption_key_secret_name" {
+variable "bucket_recover_from_encryption_key_secret_name" {
   description = "Secret name referenced by S3_RECOVER_FROM_ENCRYPTION_KEY."
   type        = string
   default     = null
 }
 
-variable "s3_recover_from_encryption_key_secret_key" {
+variable "bucket_recover_from_encryption_key_secret_key" {
   description = "Secret key referenced by S3_RECOVER_FROM_ENCRYPTION_KEY."
   type        = string
   default     = null
 }
 
-variable "s3_recover_from_endpoint_base" {
+variable "bucket_recover_from_endpoint_base" {
   description = "Value for S3_RECOVER_FROM_ENDPOINT_BASE. Required for non-AWS S3-compatible storage (OCI, MinIO, etc.). Format: https://<endpoint>"
   type        = string
   default     = null
 }
 
-variable "s3_recover_from_path_style_access" {
+variable "bucket_recover_from_path_style_access" {
   description = "Value for S3_RECOVER_FROM_PATH_STYLE_ACCESS. Set to true for OCI Object Storage and other S3-compatible storage that uses path-style URLs."
   type        = bool
   default     = null

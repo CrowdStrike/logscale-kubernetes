@@ -46,7 +46,7 @@ resource "kubernetes_secret_v1" "logscale_endpoint" {
   depends_on = [null_resource.logscale_ns]
 }
 
-# The encryption key given with AZURE_STORAGE_ENCRYPTION_KEY can be any UTF-8 string and will
+# The storage encryption key can be any UTF-8 string and will
 # be used to encrypt the data stored within the bucket. The suggested value is 64 or more random ASCII characters.
 # This encryption is applied prior to bucket upload.
 # For standby DR clusters, if primary_encryption_key_value is provided, it will be used instead of generating a new one.

@@ -28,7 +28,7 @@ module "kafka" {
   strimzi_operator_chart_version = var.strimzi_operator_chart_version
   strimzi_operator_repo          = var.strimzi_operator_repo
 
-  kube_storage_class_for_kafka   = local.node_group_definitions["kafka_broker_data_storage_class"]
+  kube_storage_class_for_kafka   = lookup(local.node_group_definitions, "kafka_broker_data_storage_class", var.pvc_storage_class)
   kafka_broker_pod_replica_count = local.node_group_definitions["kafka_broker_pod_replica_count"]
   kafka_broker_resources         = local.node_group_definitions["kafka_broker_resources"]
   kafka_broker_data_disk_size    = local.node_group_definitions["kafka_broker_data_disk_size"]
@@ -74,11 +74,8 @@ module "logscale-prereqs" {
   topo_lvm_controller_replicas = var.topo_lvm_controller_replicas
   topo_lvm_disk_pattern        = var.topo_lvm_disk_pattern
   use_topo_lvm                 = var.use_topo_lvm
-
-  # Storage class configuration for conditional topo-lvm deployment
-  kafka_broker_data_storage_class    = local.node_group_definitions["kafka_broker_data_storage_class"]
-  logscale_ui_data_storage_class     = lookup(local.node_group_definitions, "logscale_ui_data_disk_type", "topolvm-provisioner")
-  logscale_ingest_data_storage_class = lookup(local.node_group_definitions, "logscale_ingest_data_disk_type", "topolvm-provisioner")
+  lvm_target_node_labels       = local.lvm_target_node_labels
+  lvm_extra_host_paths         = var.lvm_extra_host_paths
 
   nginx_ingress_helm_chart_version = var.nginx_ingress_helm_chart_version
   deploy_nginx_ingress             = var.deploy_nginx_ingress
@@ -108,8 +105,7 @@ module "logscale-prereqs" {
   # DR: Pass primary encryption key for standby clusters
   primary_encryption_key_value = var.primary_encryption_key_value
 
-  # DR mode and cluster issuer skip
-  dr                  = var.dr
+  # Skip HTTP-01 ClusterIssuer when using external DNS-01 solver
   skip_cluster_issuer = var.skip_cluster_issuer
 
   depends_on = [
@@ -174,17 +170,17 @@ module "logscale" {
   logscale_digest_pod_count       = local.node_group_definitions["logscale_digest_pod_count"]
   logscale_digest_resources       = local.node_group_definitions["logscale_digest_resources"]
   logscale_digest_data_disk_size  = local.node_group_definitions["logscale_digest_data_disk_size"]
-  kube_storage_class_for_logscale = lookup(local.node_group_definitions, "logscale_digest_data_disk_type", "topolvm-provisioner")
+  kube_storage_class_for_logscale = lookup(local.node_group_definitions, "logscale_digest_data_disk_type", var.pvc_storage_class)
 
   logscale_ui_resources              = local.node_group_definitions["logscale_ui_resources"]
   logscale_ui_pod_count              = var.dr == "standby" ? 0 : local.node_group_definitions["logscale_ui_pod_count"]
   logscale_ui_data_disk_size         = local.node_group_definitions["logscale_ui_data_disk_size"]
-  kube_storage_class_for_logscale_ui = lookup(local.node_group_definitions, "logscale_ui_data_disk_type", "topolvm-provisioner")
+  kube_storage_class_for_logscale_ui = lookup(local.node_group_definitions, "logscale_ui_data_disk_type", var.pvc_storage_class)
 
   logscale_ingest_pod_count              = var.dr == "standby" ? 0 : local.node_group_definitions["logscale_ingest_pod_count"]
   logscale_ingest_resources              = local.node_group_definitions["logscale_ingest_resources"]
   logscale_ingest_data_disk_size         = local.node_group_definitions["logscale_ingest_data_disk_size"]
-  kube_storage_class_for_logscale_ingest = lookup(local.node_group_definitions, "logscale_ingest_data_disk_type", "topolvm-provisioner")
+  kube_storage_class_for_logscale_ingest = lookup(local.node_group_definitions, "logscale_ingest_data_disk_type", var.pvc_storage_class)
 
   # Kafka - BYOK / Strimzi
   provision_kafka_servers = var.provision_kafka_servers
@@ -194,20 +190,24 @@ module "logscale" {
 
   use_custom_certificate = var.use_own_certificate_for_ingress
 
+  enable_pdf_render_service     = var.enable_pdf_render_service
+  pdf_render_service_image      = var.pdf_render_service_image
+  pdf_render_service_node_count = var.pdf_render_service_node_count
+
   # In the pre-req module, we store kuberentes secrets used to configure
   # logscale which are referenced here.
   k8s_secret_static_user_logins = module.logscale-prereqs.k8s_secret_static_user_logins
   k8s_secret_logscale_license   = module.logscale-prereqs.k8s_secret_logscale_license
 
-  logscale_update_strategy                   = var.logscale_update_strategy
-  s3_recover_from_replace_region             = var.s3_recover_from_replace_region
-  s3_recover_from_replace_bucket             = var.s3_recover_from_replace_bucket
-  s3_recover_from_bucket                     = var.s3_recover_from_bucket
-  s3_recover_from_region                     = var.s3_recover_from_region
-  s3_recover_from_encryption_key_secret_name = var.s3_recover_from_encryption_key_secret_name
-  s3_recover_from_encryption_key_secret_key  = var.s3_recover_from_encryption_key_secret_key
-  s3_recover_from_endpoint_base              = var.s3_recover_from_endpoint_base
-  s3_recover_from_path_style_access          = var.s3_recover_from_path_style_access
+  logscale_update_strategy                       = var.logscale_update_strategy
+  bucket_recover_from_replace_region             = var.bucket_recover_from_replace_region
+  bucket_recover_from_replace_bucket             = var.bucket_recover_from_replace_bucket
+  bucket_recover_from_bucket                     = var.bucket_recover_from_bucket
+  bucket_recover_from_region                     = var.bucket_recover_from_region
+  bucket_recover_from_encryption_key_secret_name = var.bucket_recover_from_encryption_key_secret_name
+  bucket_recover_from_encryption_key_secret_key  = var.bucket_recover_from_encryption_key_secret_key
+  bucket_recover_from_endpoint_base              = var.bucket_recover_from_endpoint_base
+  bucket_recover_from_path_style_access          = var.bucket_recover_from_path_style_access
 
   providers = {
     kubernetes = kubernetes

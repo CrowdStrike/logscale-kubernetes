@@ -3,10 +3,15 @@ variable "logscale_cluster_type" {
   type        = string
 }
 
-variable "cloud_provider" {
-  description = "Cloud provider (oke, eks, aks, gke)"
-  type        = string
-  default     = "oke"
+variable "lvm_extra_host_paths" {
+  description = "Extra host paths to mount in the LVM setup daemonset. Cloud modules can specify cloud-specific paths here."
+  type = list(object({
+    name       = string
+    host_path  = string
+    mount_path = string
+    type       = optional(string, "DirectoryOrCreate")
+  }))
+  default = []
 }
 
 variable "name_prefix" {
@@ -95,9 +100,8 @@ variable "topo_lvm_controller_replicas" {
 }
 
 variable "lvm_target_node_labels" {
-  description = "List of node labels (k8s-app values) where LVM preparation should run"
+  description = "List of node labels (k8s-app values) where LVM preparation should run. Passed from the parent module."
   type        = list(string)
-  default     = []
 }
 
 variable "use_custom_certificate" {
@@ -161,37 +165,11 @@ variable "deploy_nginx_ingress" {
   default     = true
 }
 
-variable "kafka_broker_data_storage_class" {
-  description = "Storage class for Kafka broker data"
-  type        = string
-}
-
-variable "logscale_ui_data_storage_class" {
-  description = "Storage class for LogScale UI data"
-  type        = string
-}
-
-variable "logscale_ingest_data_storage_class" {
-  description = "Storage class for LogScale ingest data"
-  type        = string
-}
-
 variable "primary_encryption_key_value" {
   description = "Primary cluster's storage encryption key value (for standby clusters from remote state). If provided, uses this value instead of generating a new one."
   type        = string
   default     = null
   sensitive   = true
-}
-
-variable "dr" {
-  description = "Disaster Recovery mode. Set to 'active' for primary cluster, 'standby' for DR replica cluster, or '' (empty) for non-DR single cluster."
-  type        = string
-  default     = ""
-
-  validation {
-    condition     = contains(["active", "standby", ""], var.dr)
-    error_message = "The dr variable must be 'active', 'standby', or '' (empty for non-DR)."
-  }
 }
 
 variable "skip_cluster_issuer" {

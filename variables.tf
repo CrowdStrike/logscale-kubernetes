@@ -56,7 +56,7 @@ variable "cloud_provider" {
 }
 
 variable "logscale_cluster_size" {
-  description = "Size of the cluster to build in Azure. Reference cluster_size.tpl for definitions."
+  description = "Size of the LogScale cluster to build. Reference cluster_size.tpl for definitions."
   type        = string
   default     = "xsmall"
 
@@ -290,6 +290,11 @@ variable "use_topo_lvm" {
   description = "Use TopoLVM for volume group management"
 }
 
+variable "pvc_storage_class" {
+  description = "Default storage class to use for PVCs"
+  type        = string
+  default     = "topolvm-provisioner"
+}
 
 variable "topo_lvm_disk_pattern" {
   description = "The pattern used by ls (ls /dev/<topo_lvm_disk_pattern>) to find the disks to add to the LVM volume group"
@@ -303,6 +308,17 @@ variable "topo_lvm_controller_replicas" {
   default     = 2
 }
 
+variable "lvm_extra_host_paths" {
+  description = "Extra host paths to mount in the LVM setup daemonset. Cloud modules can specify cloud-specific paths here (e.g., OCI requires /run/lvm and /etc/lvm)."
+  type = list(object({
+    name       = string
+    host_path  = string
+    mount_path = string
+    type       = optional(string, "DirectoryOrCreate")
+  }))
+  default = []
+}
+
 variable "nginx_ingress_helm_chart_version" {
   description = "The version of nginx-ingress to install in the environment. Reference: github.com/kubernetes/ingress-nginx for helm chart version to nginx version mapping."
   type        = string
@@ -313,6 +329,24 @@ variable "use_own_certificate_for_ingress" {
   default     = false
   type        = bool
   description = "Set to true if you plan to bring your own certificate for logscale ingest/ui access."
+}
+
+variable "enable_pdf_render_service" {
+  description = "Enable PDF render service"
+  type        = bool
+  default     = false
+}
+
+variable "pdf_render_service_image" {
+  description = "Docker image of the PDF render service"
+  type        = string
+  default     = ""
+}
+
+variable "pdf_render_service_node_count" {
+  description = "The replica count of the PDF render service"
+  type        = number
+  default     = 2
 }
 
 variable "logscale_update_strategy" {
@@ -371,49 +405,49 @@ variable "kubectl_context" {
   default     = ""
 }
 
-variable "s3_recover_from_bucket" {
-  description = "S3 bucket name to recover data from (for standby DR clusters)"
+variable "bucket_recover_from_bucket" {
+  description = "Bucket name to recover data from (for standby DR clusters)"
   type        = string
   default     = null
 }
 
-variable "s3_recover_from_region" {
-  description = "S3 region to recover data from (for standby DR clusters)"
+variable "bucket_recover_from_region" {
+  description = "Region to recover data from (for standby DR clusters)"
   type        = string
   default     = null
 }
 
-variable "s3_recover_from_replace_region" {
-  description = "S3 region to replace in recovery paths (for standby DR clusters)"
+variable "bucket_recover_from_replace_region" {
+  description = "Region to replace in recovery paths (for standby DR clusters)"
   type        = string
   default     = null
 }
 
-variable "s3_recover_from_replace_bucket" {
+variable "bucket_recover_from_replace_bucket" {
   description = "Value for S3_RECOVER_FROM_REPLACE_BUCKET."
   type        = string
   default     = null
 }
 
-variable "s3_recover_from_encryption_key_secret_name" {
+variable "bucket_recover_from_encryption_key_secret_name" {
   description = "Kubernetes secret name containing the encryption key for the recovery bucket"
   type        = string
   default     = null
 }
 
-variable "s3_recover_from_encryption_key_secret_key" {
+variable "bucket_recover_from_encryption_key_secret_key" {
   description = "Key within the Kubernetes secret containing the encryption key for the recovery bucket"
   type        = string
   default     = null
 }
 
-variable "s3_recover_from_endpoint_base" {
+variable "bucket_recover_from_endpoint_base" {
   description = "Value for S3_RECOVER_FROM_ENDPOINT_BASE. Required for non-AWS S3-compatible storage (OCI, MinIO, etc.). Format: https://<endpoint>"
   type        = string
   default     = null
 }
 
-variable "s3_recover_from_path_style_access" {
+variable "bucket_recover_from_path_style_access" {
   description = "Value for S3_RECOVER_FROM_PATH_STYLE_ACCESS. Set to true for OCI Object Storage and other S3-compatible storage that uses path-style URLs."
   type        = bool
   default     = null
