@@ -1,8 +1,7 @@
 /*
  * ## Module: kubernetes/logscale
  * This module provisions the Humio Operator in the target kubernetes environment and installs manifests that instruct the Humio Operator
- * on the Logscale cluster to build. This also controls creation of ingress points for the nginx-ingress controllers to route traffic
- * to Logscale systems.
+ * on the Logscale cluster to build. This also controls creation of ingress points to route traffic to Logscale systems.
  * 
  */
 

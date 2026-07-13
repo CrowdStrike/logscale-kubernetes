@@ -1,22 +1,22 @@
 terraform {
   required_providers {
     random = {
-      source = "hashicorp/random"
+      source  = "hashicorp/random"
       version = ">=3.6.1"
     }
 
     time = {
-      source = "hashicorp/time"
+      source  = "hashicorp/time"
       version = ">=0.9.1"
     }
 
     http = {
-      source = "hashicorp/http"
+      source  = "hashicorp/http"
       version = "~>3.4.2"
     }
 
     kubernetes = {
-      source = "hashicorp/kubernetes"
+      source  = "hashicorp/kubernetes"
       version = ">=2.31.0"
     }
 
@@ -32,14 +32,16 @@ terraform {
   }
 }
 
-provider "kubernetes" {
-  config_path    = var.k8s_config_path
-  config_context = var.k8s_cluster_context
-}
-
-provider "helm" {
-  kubernetes {
-    config_path    = var.k8s_config_path
-    config_context = var.k8s_cluster_context
-  }
-}
+# Provider configuration removed to allow parent modules to pass providers explicitly.
+# Parent modules (OCI, AWS, GCP, Azure) must configure kubernetes and helm providers
+# and pass them via the `providers` block when calling this module.
+#
+# Example:
+#   module "logscale" {
+#     source = "../logscale-kubernetes/"
+#     providers = {
+#       kubernetes = kubernetes
+#       helm       = helm
+#     }
+#     ...
+#   }

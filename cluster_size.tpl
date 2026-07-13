@@ -11,14 +11,14 @@ ${jsonencode(
         // kafka nodes
         "kafka_broker_pod_replica_count": 3,
         "kafka_broker_resources": {"limits": {"cpu": 1, "memory": "2Gi"}, "requests": {"cpu": 1, "memory": "2Gi"}},
-        "kafka_broker_data_disk_size": "24Gi",
+        "kafka_broker_data_disk_size": "1024Gi",
         "kafka_broker_disk_count": "1",
         "kafka_broker_data_storage_class": "topolvm-provisioner",
 
         // digest nodes
         "logscale_digest_pod_count": 3,
         "logscale_digest_data_disk_size": "50Gi",
-        "logscale_digest_resources": {"limits": {"cpu": 2, "memory": "4Gi"}, "requests": {"cpu": 2, "memory": "4Gi"}},
+        "logscale_digest_resources": {"limits": {"cpu": 2, "memory": "16Gi"}, "requests": {"cpu": 2, "memory": "16Gi"}},
         "logscale_target_replication_factor": 2,
 
         // ingest nodes

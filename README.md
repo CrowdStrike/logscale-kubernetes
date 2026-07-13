@@ -1,4 +1,4 @@
-# LogScale Kubernetes Terraform Modules
+# LogScale Kubernetes Terraform Modules 
 
 This repository provides Terraform modules for deploying CrowdStrike LogScale on Kubernetes clusters across multiple cloud providers (AWS, Azure, and GCP) or on a bare-metal Kubernetes cluster.
 
@@ -7,7 +7,7 @@ This repository provides Terraform modules for deploying CrowdStrike LogScale on
 These modules handle the complete deployment of LogScale including:
 
 - Custom Resource Definitions for the Humio Operator
-- Prerequisite components (cert-manager, nginx-ingress, TopoLVM)
+- Prerequisite components (cert-manager, Gateway API, TopoLVM)
 - Kafka infrastructure via Strimzi (optional)
 - LogScale cluster deployment with configurable sizing
 
@@ -53,7 +53,7 @@ This module installs prerequisites for running LogScale in Kubernetes.
 - Kubernetes Namespaces creation
 - Cert Manager installation
 - Let's Encrypt certificate issuer configuration
-- NGINX Ingress Controller for managing connections to LogScale
+- Gateway API for managing connections to LogScale
 - TopoLVM for managing storage on NVME-enabled nodes
 - Kubernetes secrets used by LogScale (license, user logins, etc.)
 
@@ -127,7 +127,7 @@ This section describes the variables that can be configured in your `terraform.t
 | Variable Name           | Description                                                   | Type   | Default           | Example             |
 |-------------------------|---------------------------------------------------------------|--------|-------------------|---------------------|
 | `k8s_cluster_context`   | Name of the kubernetes cluster context.                       | string | -                 | `"colima"`          |
-| `k8s_config_path`       | The path that will contain the kubernetes configuration file. | string | `"~/.kube/config"` | `"~/.kube/config"` |
+| `kubeconfig_path`       | Absolute path to a cluster-specific kubeconfig file.          | string | `""`              | `"/path/to/kubeconfig-aks-mycluster.yaml"` |
 | `k8s_namespace_prefix`  | Prefix applied to all created namespaces.                     | string | `"log"`           | `"logscale"`        |
 | `logscale_namespace`    | The kubernetes namespace used logscale.                       | string | `"logging"`       | -                   |
 | `cm_namespace`          | Kubernetes namespace used by cert-manager.                    | string | `"cert-manager"`  | -                   |
@@ -167,8 +167,8 @@ This section describes the variables that can be configured in your `terraform.t
 |---------------------------------|----------------------------------------------------------------------------|--------|--------------------------------|------------|
 | `provision_kafka_servers`       | Set to true to provision strimzi kafka within this kubernetes cluster.     | bool   | `true`                         | `true`     |
 | `byo_kafka_connection_string`   | Your own kafka environment connection string.                              | string | `""`                           | -          |
-| `strimzi_operator_chart_version`| Helm chart version for installing strimzi.                                 | string | `""`                           | `"0.47.0"` |
-| `strimzi_operator_version`      | Strimzi operator version for resource definition installation.             | string | `""`                           | `"0.47.0"` |
+| `strimzi_operator_chart_version`| Helm chart version for installing strimzi.                                 | string | `""`                           | `"0.45.0"` |
+| `strimzi_operator_version`      | Strimzi operator version for resource definition installation.             | string | `""`                           | `"0.45.0"` |
 | `strimzi_operator_repo`         | Strimzi operator repo.                                                     | string | `"https://strimzi.io/charts/"` | -          |
 
 ### Operator and Chart Versions
@@ -189,21 +189,8 @@ This section describes the variables that can be configured in your `terraform.t
 
 | Variable Name                     | Description                                                 | Type         | Default  | Example                                     |
 |-----------------------------------|-------------------------------------------------------------|--------------|----------|---------------------------------------------|
-| `deploy_nginx_ingress`            | Deploy a nginx ingress controller.                          | bool         | `true`   | `false`                                     |
-| `nginx_ingress_helm_chart_version`| The version of nginx-ingress to install in the environment. | string       | -        | `"4.12.1"`                                  |
-| `nginx_ingress_sets`              | List of name/value pairs for nginx ingress.                 | list(object) | `[]`     | -                                           |
-| `extra_nginx_annotations`         | Extra annotations to add to the nginx ingress controller.   | map          | `{}`     | See commented example in local-input.tfvars |
-| `ingress_class_name`              | Class name of the nginx ingress controller.                 | string       | `"nginx"`| `"nginx"`                                   |
-
-### PDF Render Service
-
-| Variable Name                   | Description                                  | Type   | Default | Example |
-|---------------------------------|----------------------------------------------|--------|---------|---------|
-| `enable_pdf_render_service`     | Enable PDF render service.                   | bool   | `false` | -       |
-| `pdf_render_service_image`      | Docker image of the PDF render service.      | string | -       | `"humio/pdf-render-service:0.1.2--build-104--sha-9a7598de95bb9775b6f59d874c37a206713bae01"` |
-| `pdf_render_service_node_count` | The replica count of the PDF render service. | number | `2`     | -       |
-| `pdf_render_service_port`       | Port of the PDF render service.              | string | `5123`  | -       |
-| `enable_scheduled_report`       | Enable scheduled report functionality.       | bool   | `false` | -       |
+| `deploy_gateway_api`              | Deploy Gateway API and associated HTTPRoutes.               | bool         | `true`   | `false`                                     |
+| `extra_gateway_annotations`       | Extra annotations to add to the Gateway API.                | map          | `{}`     | See commented example in local-input.tfvars |
 
 ### Password Management
 

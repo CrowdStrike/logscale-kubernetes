@@ -7,12 +7,12 @@
 # Convert the given number of broker pods into a controller/broker split and account for the smallest 
 # architecture of 3 nodes
 locals {
-  possible_controller_counts = [for c in [3,5,7] : c if c < var.kafka_broker_pod_replica_count]
-  controller_count = var.kafka_broker_pod_replica_count <= 3 ? 3 : max(local.possible_controller_counts...)
-  broker_count = var.kafka_broker_pod_replica_count <= 3 ? 0 : var.kafka_broker_pod_replica_count - local.controller_count
+  possible_controller_counts = [for c in [3, 5, 7] : c if c < var.kafka_broker_pod_replica_count]
+  controller_count           = var.kafka_broker_pod_replica_count <= 3 ? 3 : max(local.possible_controller_counts...)
+  broker_count               = var.kafka_broker_pod_replica_count <= 3 ? 0 : var.kafka_broker_pod_replica_count - local.controller_count
 
-  kubernetes_namespace = "${var.k8s_namespace_prefix}"
-  io_threads = var.num_kafka_volumes * 2
+  kubernetes_namespace = var.k8s_namespace_prefix
+  io_threads           = var.num_kafka_volumes * 2
 }
 
 # Helm for Strimzi
@@ -63,13 +63,12 @@ resource "kubernetes_manifest" "kafka_cluster" {
       "namespace" = local.kubernetes_namespace
       "annotations" = {
         "strimzi.io/node-pools" = "enabled"
-        "strimzi.io/kraft" = "enabled"
+        "strimzi.io/kraft"      = "enabled"
       }
     }
     "spec" = {
       "kafka" = {
-        "version" = "3.9.0",
-        "metadataVersion" = "3.9-IV0"
+        "version" = "4.0.0",
         "config" = {
           "auto.create.topics.enable"                = true
           "default.replication.factor"               = 3
@@ -105,7 +104,7 @@ resource "kubernetes_manifest" "kafka_cluster" {
             "memory" = var.kafka_broker_resources["requests"]["memory"]
           }
         }
-        
+
         "template" = {
           "pod" = {
             "affinity" = {
@@ -147,64 +146,68 @@ resource "kubernetes_manifest" "kafka_cluster" {
             }
           }
         }
-        
+
       }
     }
   }
-  
+
   depends_on = [
     helm_release.strimzi_operator, kubernetes_manifest.kafka-node-pool
   ]
-  
+
 }
 
 # Node pools for the kafka cluster
+# Note: Strimzi pod names are generated as <kafka-cluster-name>-<nodepool-name>-<index>
+# DNS labels are limited to 63 chars, so we use short static pool names to avoid exceeding the limit
+# Example: zfeo94-dr-secondary-strimzi-kafka-dual-role-0 (47 chars - OK)
+# vs: zfeo94-dr-secondary-strimzi-kafka-zfeo94-dr-secondary-dual-role-0 (65 chars - FAILS)
 resource "kubernetes_manifest" "kafka-node-pool" {
   manifest = {
     "apiVersion" = "kafka.strimzi.io/v1beta2"
     "kind"       = "KafkaNodePool"
     "metadata" = {
-      "name"      = "${var.name_prefix}-dual-role"
+      "name"      = "dual-role"
       "namespace" = local.kubernetes_namespace
       "labels" = {
-        "strimzi.io/cluster": "${var.name_prefix}-strimzi-kafka"
+        "strimzi.io/cluster" : "${var.name_prefix}-strimzi-kafka"
       }
     }
     "spec" = {
-        "replicas"    = local.controller_count
-        "roles"       = [ "controller", "broker" ]
+      "replicas" = local.controller_count
+      "roles"    = ["controller", "broker"]
 
 
-        storage    = {
-          type = "jbod"
-          volumes = concat([
-            # Always have at least one mount
-            {
-              id            = 0
-              type          = "persistent-claim"
-              deleteClaim   = false
-              size          = var.kafka_broker_data_disk_size
-              type          = "persistent-claim"
-              class         = var.kube_storage_class_for_kafka
-              kraftMetadata = "shared"
-            }
-          ],[
-            # Additional mounts are created to increase throughput per host
-            for idx in range(1, var.num_kafka_volumes) : {
-              id            = idx+1
-              type          = "persistent-claim"
-              deleteClaim   = false
-              size          = var.kafka_broker_data_disk_size
-              type          = "persistent-claim"
-              class         = var.kube_storage_class_for_kafka
-            }
-          ])
-        }
+      storage = {
+        type = "jbod"
+        volumes = concat([
+          # Always have at least one mount
+          {
+            id            = 0
+            type          = "persistent-claim"
+            deleteClaim   = false
+            size          = var.kafka_broker_data_disk_size
+            type          = "persistent-claim"
+            class         = var.kube_storage_class_for_kafka
+            kraftMetadata = "shared"
+          }
+          ], [
+          # Additional mounts are created to increase throughput per host
+          for idx in range(1, var.num_kafka_volumes) : {
+            id          = idx + 1
+            type        = "persistent-claim"
+            deleteClaim = false
+            size        = var.kafka_broker_data_disk_size
+            type        = "persistent-claim"
+            class       = var.kube_storage_class_for_kafka
+          }
+        ])
+      }
 
     }
   }
 
-  depends_on = [ helm_release.strimzi_operator ]
+  depends_on = [helm_release.strimzi_operator]
 }
 
 resource "kubernetes_manifest" "kafka-node-pool-extrabrokers" {
@@ -213,45 +216,45 @@ resource "kubernetes_manifest" "kafka-node-pool-extrabrokers" {
     "apiVersion" = "kafka.strimzi.io/v1beta2"
     "kind"       = "KafkaNodePool"
     "metadata" = {
-      "name"      = "${var.name_prefix}-extra-brokers"
+      "name"      = "extra-brokers"
       "namespace" = local.kubernetes_namespace
       "labels" = {
-        "strimzi.io/cluster": "${var.name_prefix}-strimzi-kafka"
+        "strimzi.io/cluster" : "${var.name_prefix}-strimzi-kafka"
       }
     }
     "spec" = {
-        "replicas"    = local.broker_count
-        "roles"       = [ "broker" ]
+      "replicas" = local.broker_count
+      "roles"    = ["broker"]
 
-        storage    = {
-          type = "jbod"
-          volumes = concat([
-            # Always have at least one mount
-            {
-              id            = 0
-              type          = "persistent-claim"
-              deleteClaim   = false
-              size          = var.kafka_broker_data_disk_size
-              type          = "persistent-claim"
-              class         = var.kube_storage_class_for_kafka
-              kraftMetadata = "shared"
-            }
-          ],[
-            # Additional mounts are created to increase throughput per host
-            for idx in range(1, var.num_kafka_volumes + 1) : {
-              id            = idx
-              type          = "persistent-claim"
-              deleteClaim   = false
-              size          = var.kafka_broker_data_disk_size
-              type          = "persistent-claim"
-              class         = var.kube_storage_class_for_kafka
-            }
-          ])
-        }
+      storage = {
+        type = "jbod"
+        volumes = concat([
+          # Always have at least one mount
+          {
+            id            = 0
+            type          = "persistent-claim"
+            deleteClaim   = false
+            size          = var.kafka_broker_data_disk_size
+            type          = "persistent-claim"
+            class         = var.kube_storage_class_for_kafka
+            kraftMetadata = "shared"
+          }
+          ], [
+          # Additional mounts are created to increase throughput per host
+          for idx in range(1, var.num_kafka_volumes + 1) : {
+            id          = idx
+            type        = "persistent-claim"
+            deleteClaim = false
+            size        = var.kafka_broker_data_disk_size
+            type        = "persistent-claim"
+            class       = var.kube_storage_class_for_kafka
+          }
+        ])
+      }
 
-        
+
     }
   }
-  depends_on = [ helm_release.strimzi_operator ]
+  depends_on = [helm_release.strimzi_operator]
 }
 
