@@ -1,53 +1,104 @@
 # This manifest is used to set up a Let's Encrypt-based certificate issuer and is made optional
 # when providing a custom certificate for use with the frontend.
+# Also skipped when skip_cluster_issuer is true (e.g., OCI standby using DNS-01 solver).
+
 resource "kubernetes_manifest" "letsencrypt_cluster_issuer" {
-  count                         = var.use_custom_certificate ? 0 : 1
+  count = var.use_custom_certificate || var.skip_cluster_issuer || var.deploy_gateway_api ? 0 : 1
 
   manifest = {
-    "apiVersion"                = "cert-manager.io/v1"
-    "kind"                      = var.cert_issuer_kind
+    "apiVersion" = "cert-manager.io/v1"
+    "kind"       = var.cert_issuer_kind
 
     "metadata" = {
-      "name"                    = var.cert_issuer_name
+      "name" = var.cert_issuer_name
     }
 
     "spec" = {
-
       "acme" = {
-        "email"                 = var.cert_issuer_email
-        
-        "privateKeySecretRef"   = {
-          "name"                = var.cert_issuer_private_key
+        "email" = var.cert_issuer_email
+
+        "privateKeySecretRef" = {
+          "name" = var.cert_issuer_private_key
         }
 
-        "server"                = var.cert_ca_server
-        
+        "server" = var.cert_ca_server
+
+        "preferredChain" = ""
+
         "solvers" = [
           {
-            "http01" = {
-              "ingress" = {
-                "class"         = "nginx"
+            http01 = {
+              ingress = {
+                class = "nginx"
               }
             }
-          },
+          }
         ]
       }
     }
   }
-  
-  depends_on = [ kubernetes_namespace_v1.cert_manager, helm_release.cert_manager, data.kubernetes_resources.check_cert_manager_crd ]
+
+  depends_on = [kubernetes_namespace_v1.cert_manager, helm_release.cert_manager, data.kubernetes_resources.check_cert_manager_crd]
+}
+
+resource "kubernetes_manifest" "letsencrypt_cluster_issuer_gateway" {
+  count = var.use_custom_certificate || var.skip_cluster_issuer || !var.deploy_gateway_api ? 0 : 1
+
+  manifest = {
+    "apiVersion" = "cert-manager.io/v1"
+    "kind"       = var.cert_issuer_kind
+
+    "metadata" = {
+      "name" = var.cert_issuer_name
+    }
+
+    "spec" = {
+      "acme" = {
+        "email" = var.cert_issuer_email
+
+        "privateKeySecretRef" = {
+          "name" = var.cert_issuer_private_key
+        }
+
+        "server" = var.cert_ca_server
+
+        "preferredChain" = ""
+
+        "solvers" = [
+          {
+            http01 = {
+              gatewayHTTPRoute = {
+                parentRefs = [
+                  {
+                    name        = "${var.name_prefix}-gateway"
+                    namespace   = var.k8s_namespace_prefix
+                    kind        = "Gateway"
+                    group       = "gateway.networking.k8s.io"
+                    sectionName = "acme-http"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+
+  depends_on = [kubernetes_namespace_v1.cert_manager, helm_release.cert_manager, data.kubernetes_resources.check_cert_manager_crd]
 }
 
 # Create a certificate with Let's Encrypt if the user did not provide a certificate
+# Also skipped when skip_cluster_issuer is true (certificate managed via ingress annotation)
 resource "kubernetes_manifest" "tls-cert-pub" {
-  count                     = var.use_custom_certificate ? 0 : 1
+  count = var.use_custom_certificate || var.skip_cluster_issuer ? 0 : 1
 
   manifest = {
-    apiVersion              = "cert-manager.io/v1"
-    kind                    = "Certificate"
+    apiVersion = "cert-manager.io/v1"
+    kind       = "Certificate"
     metadata = {
-        name = "${var.name_prefix}-tls-cert"
-        namespace = "${var.k8s_namespace_prefix}"
+      name      = "${var.name_prefix}-tls-cert"
+      namespace = "${var.k8s_namespace_prefix}"
     }
 
     spec = {
@@ -58,9 +109,9 @@ resource "kubernetes_manifest" "tls-cert-pub" {
       }
 
       commonName = var.logscale_public_fqdn
-      dnsNames = [ var.logscale_public_fqdn ]
+      dnsNames   = [var.logscale_public_fqdn]
     }
-  
+
   }
-  depends_on = [ kubernetes_manifest.letsencrypt_cluster_issuer, kubernetes_namespace_v1.logscale-ingress ]
+  depends_on = [kubernetes_manifest.letsencrypt_cluster_issuer, kubernetes_manifest.letsencrypt_cluster_issuer_gateway, kubernetes_namespace_v1.logscale-ingress]
 }

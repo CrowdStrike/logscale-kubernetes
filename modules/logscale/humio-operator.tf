@@ -3,9 +3,9 @@ Create humio operator pods
 */
 resource "helm_release" "humio_operator" {
   name         = "humio-operator"
-  repository   = var.humio_operator_repo
   chart        = "humio-operator"
-  namespace    = "${var.k8s_namespace_prefix}"
+  repository   = var.humio_operator_repo
+  namespace    = var.k8s_namespace_prefix
   version      = var.humio_operator_chart_version
   skip_crds    = true
   reset_values = true
@@ -44,7 +44,25 @@ resource "helm_release" "humio_operator" {
   }
 
   depends_on = [
-    data.kubernetes_resources.check_humio_cluster_crd 
+    data.kubernetes_resources.check_humio_cluster_crd
   ]
 
 }
+
+# The upstream chart hardcodes replicas to 1. Patch it to 0 for standby DR clusters after deployment.
+# This must re-run after every Helm upgrade since Helm will reset replicas to 1.
+resource "null_resource" "humio_operator_replica_patch" {
+  count = var.dr == "standby" ? 1 : 0
+
+  provisioner "local-exec" {
+    command     = "kubectl patch deployment ${helm_release.humio_operator.name} -n ${var.k8s_namespace_prefix} -p '{\"spec\":{\"replicas\":0}}'"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
+  }
+
+  triggers = {
+    helm_revision = helm_release.humio_operator.metadata[0].revision
+  }
+
+  depends_on = [helm_release.humio_operator]
+}
+

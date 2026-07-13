@@ -41,9 +41,7 @@ lvmd:
               - key: k8s-app
                 operator: In
                 values:
-%{ for node_type in node_types ~}
-                  - ${node_type}
-%{ endfor ~}
+                  - logscale-digest
               # - key: storageVolumeGroup
               #   operator: DoesNotExist
   tolerations:
@@ -63,81 +61,37 @@ lvmd:
       securityContext:
         privileged: true
       command:
-        - /bin/sh
+        - /bin/bash
         - -c
         - |
-          set -e
-          HOST="nsenter --mount=/proc/1/ns/mnt --"
+          DEBIAN_FRONTEND=noninteractive apt-get update && \
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confold" lvm2 parted fdisk
 
-          # Install lvm2 on the host if missing (required by lvmd via nsenter).
-          if ! $HOST test -x /sbin/lvm; then
-            echo "Installing lvm2 on host..."
-            $HOST sh -c 'yum install -y lvm2 2>/dev/null || apt-get update && apt-get install -y lvm2' || true
-          fi
-
-          # Disable LVM devices file filter if present (Oracle Linux 8+).
-          if $HOST test -f /etc/lvm/devices/system.devices; then
-            echo "Removing LVM devices file filter"
-            $HOST rm -f /etc/lvm/devices/system.devices
-          fi
-          $HOST sed -i 's/use_devicesfile = 1/use_devicesfile = 0/' /etc/lvm/lvm.conf 2>/dev/null || true
-
-          VG_NAME="nvme-vg"
-          if $HOST vgs "$VG_NAME" 2>/dev/null; then
-            echo "Volume group $VG_NAME already exists - skipping"
-          else
-            echo "Scanning for available disks..."
-            available_disks=""
-            for disk in $($HOST sh -c "ls /dev/${topo_lvm_disk_pattern} 2>/dev/null" || true); do
-              echo "Found disk: $disk"
-              if $HOST pvcreate "$disk" -ff -y; then
-                echo "SUCCESS: Disk $disk initialized"
-                available_disks="$available_disks $disk"
-              fi
-            done
-
-            if [ -z "$available_disks" ]; then
-              echo "ERROR: No suitable disks found"
-              exit 1
+          echo "Scanning for available disks..."
+          available_disks=""
+          for disk in $(ls /dev/nvme*n* 2>/dev/null || true); do
+            echo "Found disk: $disk"
+            if pvcreate $disk -ff -y 2>/dev/null; then
+              echo "SUCCESS: Disk $disk initialized"
+              available_disks="$available_disks $disk"
             fi
+          done
 
+          echo "Available disks: $available_disks"
+          if [ -n "$available_disks" ]; then
+            VG_NAME="nvme-vg"
             if echo "$available_disks" | grep -q "sdb"; then
               VG_NAME="ssd-vg"
             fi
-            echo "Creating volume group $VG_NAME with:$available_disks"
-            $HOST vgcreate "$VG_NAME" $available_disks
+            echo "Creating volume group $VG_NAME..."
+            vgcreate $VG_NAME $available_disks || true
             echo "SUCCESS: Volume group $VG_NAME created"
+            vgs $VG_NAME
+          else
+            echo "ERROR: No suitable disks found"
+            exit 1
           fi
-          $HOST vgs "$VG_NAME"
           echo "LVM setup completed"
-%{ if length(lvmd_extra_host_paths) > 0 ~}
-      # Persist LVM metadata to host so lvmd can discover the VG.
-      volumeMounts:
-%{ for hp in lvmd_extra_host_paths ~}
-        - name: ${hp.name}
-          mountPath: ${hp.mount_path}
-%{ endfor ~}
-%{ endif ~}
-%{ if length(lvmd_extra_host_paths) > 0 ~}
-  # Cloud-specific host paths for lvmd (e.g., OCI needs /run/lock/lvm, /etc/lvm).
-  # additionalVolumes extends pod-level volumes without replacing chart defaults.
-  # volumeMounts replaces container-level mounts, so we must re-include the
-  # chart default lvmd-socket-dir (/run/topolvm) alongside the extra mounts.
-  additionalVolumes:
-%{ for hp in lvmd_extra_host_paths ~}
-    - name: ${hp.name}
-      hostPath:
-        path: ${hp.host_path}
-        type: ${hp.type}
-%{ endfor ~}
-  volumeMounts:
-    - name: lvmd-socket-dir
-      mountPath: /run/topolvm
-%{ for hp in lvmd_extra_host_paths ~}
-    - name: ${hp.name}
-      mountPath: ${hp.mount_path}
-%{ endfor ~}
-%{ endif ~}
 
 node:
   affinity:
@@ -152,9 +106,7 @@ node:
               - key: k8s-app
                 operator: In
                 values:
-%{ for node_type in node_types ~}
-                  - ${node_type}
-%{ endfor ~}
+                  - logscale-digest
               # - key: storageVolumeGroup
               #   operator: DoesNotExist
   tolerations:
@@ -199,3 +151,4 @@ cert-manager:
     tolerations:
       - key: "CriticalAddonsOnly"
         operator: "Exists"
+

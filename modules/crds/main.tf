@@ -11,7 +11,8 @@
 
 resource "null_resource" "install_cert_manager" {
   provisioner "local-exec" {
-    command = "kubectl apply -f ${var.cm_crds_url}"
+    command     = "kubectl apply -f ${var.cm_crds_url}"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 }
 
@@ -19,7 +20,8 @@ resource "null_resource" "install_cert_manager" {
 resource "null_resource" "install_strimzi_crds" {
   count = var.provision_kafka_servers ? 1 : 0
   provisioner "local-exec" {
-    command = "kubectl apply -f https://github.com/strimzi/strimzi-kafka-operator/releases/download/${var.strimzi_operator_version}/strimzi-crds-${var.strimzi_operator_version}.yaml"
+    command     = "kubectl apply -f https://github.com/strimzi/strimzi-kafka-operator/releases/download/${var.strimzi_operator_version}/strimzi-crds-${var.strimzi_operator_version}.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 }
 
@@ -75,138 +77,169 @@ data "http" "humiobootstraptokens" {
 data "http" "humiofeatureflags" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiofeatureflags.yaml"
 }
- data "http" "humiogroups" {
+data "http" "humiogroups" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiogroups.yaml"
 }
- data "http" "humioorganizationpermissionroles" {
+data "http" "humioorganizationpermissionroles" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioorganizationpermissionroles.yaml"
 }
- data "http" "humiosystempermissionroles" {
+data "http" "humiosystempermissionroles" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiosystempermissionroles.yaml"
 }
- data "http" "humiousers" {
+data "http" "humiousers" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiousers.yaml"
 }
- data "http" "humioviewpermissionroles" {
+data "http" "humioviewpermissionroles" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioviewpermissionroles.yaml"
 }
- data "http" "humioipfilters" {
+data "http" "humioipfilters" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioipfilters.yaml"
 }
- data "http" "humiomulticlustersearchviews" {
+data "http" "humiomulticlustersearchviews" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiomulticlustersearchviews.yaml"
 }
- data "http" "humioorganizationtokens" {
+data "http" "humioorganizationtokens" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioorganizationtokens.yaml"
 }
- data "http" "humiopdfrenderservices" {
+data "http" "humiopdfrenderservices" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiopdfrenderservices.yaml"
 }
- data "http" "humiosystemtokens" {
+data "http" "humiosystemtokens" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiosystemtokens.yaml"
 }
- data "http" "humioviewtokens" {
+data "http" "humioviewtokens" {
   url = "https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioviewtokens.yaml"
 }
 
 # Install Humio CRDs using null_resource to avoid for_each issues
 resource "null_resource" "install_humio_crds" {
   count = var.humio_operator_version != null ? 1 : 0
-  
+
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioclusters.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioclusters.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioexternalclusters.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioexternalclusters.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioingesttokens.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioingesttokens.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioparsers.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioparsers.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiorepositories.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiorepositories.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioviews.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioviews.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioalerts.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioalerts.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioactions.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioactions.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioscheduledsearches.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioscheduledsearches.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiofilteralerts.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiofilteralerts.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioaggregatealerts.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioaggregatealerts.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiobootstraptokens.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiobootstraptokens.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiofeatureflags.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiofeatureflags.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiogroups.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiogroups.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioorganizationpermissionroles.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioorganizationpermissionroles.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiosystempermissionroles.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiosystempermissionroles.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiousers.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiousers.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioviewpermissionroles.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioviewpermissionroles.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioipfilters.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioipfilters.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiomulticlustersearchviews.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiomulticlustersearchviews.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioorganizationtokens.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioorganizationtokens.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiopdfrenderservices.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiopdfrenderservices.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiosystemtokens.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humiosystemtokens.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioviewtokens.yaml"
+    command     = "kubectl apply --server-side -f https://raw.githubusercontent.com/humio/humio-operator/humio-operator-${var.humio_operator_version}/config/crd/bases/core.humio.com_humioviewtokens.yaml"
+    environment = var.kubeconfig_path != "" ? { KUBECONFIG = var.kubeconfig_path } : {}
   }
 }
 
+resource "null_resource" "install_gateway_api_crds" {
+  count = var.gateway_api_version != null ? 1 : 0
+
+  provisioner "local-exec" {
+    command     = "kubectl apply --server-side -f ${var.gateway_api_repo}/releases/download/${var.gateway_api_version}/standard-install.yaml"
+  }
+}
